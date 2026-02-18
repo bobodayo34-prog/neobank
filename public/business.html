@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Businesses — NeoBank</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .biz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .biz-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      position: relative;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .biz-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .biz-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .biz-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+    .biz-type { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .biz-earn { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--accent); margin: 12px 0 4px; }
+    .biz-freq { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+    .biz-timer {
+      background: var(--bg2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 14px 0;
+      font-size: 13px;
+      color: var(--text2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .timer-val { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--gold); }
+    .biz-progress { width: 100%; height: 4px; background: var(--bg2); border-radius: 2px; overflow: hidden; }
+    .biz-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--blue)); border-radius: 2px; transition: width 1s linear; }
+    .del-btn {
+      position: absolute;
+      top: 14px; right: 14px;
+      background: none;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .del-btn:hover { color: var(--red); background: rgba(255,71,87,0.1); }
+    .slot-indicator {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .slot { width: 28px; height: 28px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    .slot.used { background: rgba(0,212,168,0.15); border-color: rgba(0,212,168,0.3); }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main fade-in">
+    <div class="page-header">
+      <h1 class="page-title">Businesses</h1>
+      <div class="page-sub">Create and manage your revenue streams</div>
+    </div>
+
+    <!-- Slots -->
+    <div class="card" style="margin-bottom:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px">Business Slots</div>
+          <div style="font-size:13px;color:var(--text2)">Up to 10 businesses allowed</div>
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:700;color:var(--accent)" id="slot-count">0/10</div>
+      </div>
+      <div class="slot-indicator" id="slots"></div>
+    </div>
+
+    <!-- Add business -->
+    <div class="card" style="margin-bottom:24px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;margin-bottom:20px">➕ Add New Business</div>
+      <div id="biz-alert" class="alert"></div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Business Name</label>
+          <input type="text" id="biz-name" class="form-control" placeholder="e.g. Coffee Shop">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Business Type</label>
+          <select id="biz-type" class="form-control">
+            <option value="">Select type...</option>
+            <option>Retail</option>
+            <option>Restaurant</option>
+            <option>Technology</option>
+            <option>Real Estate</option>
+            <option>Finance</option>
+            <option>Healthcare</option>
+            <option>Education</option>
+            <option>Entertainment</option>
+            <option>Manufacturing</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Earnings Amount ($)</label>
+          <input type="number" id="biz-earnings" class="form-control" placeholder="e.g. 500" min="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Earning Frequency</label>
+          <select id="biz-freq" class="form-control">
+            <option value="daily">Daily (pays every 1 hour)</option>
+            <option value="weekly">Weekly (pays every 7 hours)</option>
+            <option value="monthly">Monthly (pays every 60 hours)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="add-biz-btn" onclick="addBusiness()">Launch Business</button>
+    </div>
+
+    <!-- Business list -->
+    <div id="biz-grid" class="biz-grid">
+      <div style="color:var(--text3);font-size:14px;padding:24px">Loading businesses...</div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/js/sidebar.js"></script>
+<script>
+  if (!auth.requireAuth()) throw new Error();
+  injectSidebar();
+  buildSidebar('/business');
+  startUsagePing();
+
+  let businesses = [];
+
+  function renderSlots(count) {
+    document.getElementById('slot-count').textContent = `${count}/10`;
+    document.getElementById('slots').innerHTML = Array.from({ length: 10 }, (_, i) => `
+      <div class="slot ${i < count ? 'used' : ''}">${i < count ? '✓' : ''}</div>
+    `).join('');
+  }
+
+  function getPayoutMs(type) {
+    return type === 'daily' ? 3600000 : type === 'weekly' ? 25200000 : 216000000;
+  }
+
+  function getProgress(biz) {
+    const total = getPayoutMs(biz.earningType);
+    const elapsed = total - (new Date(biz.nextPayout) - Date.now());
+    return Math.min(100, Math.max(0, (elapsed / total) * 100));
+  }
+
+  function renderBusinesses() {
+    const grid = document.getElementById('biz-grid');
+    if (!businesses.length) {
+      grid.innerHTML = `<div class="empty"><div class="empty-icon">🏢</div><div class="empty-title">No businesses yet</div><p style="color:var(--text2);font-size:14px">Add your first business to start earning</p></div>`;
+      return;
+    }
+    grid.innerHTML = businesses.map(b => `
+      <div class="biz-card">
+        <button class="del-btn" onclick="deleteBusiness('${b._id}')" title="Remove">✕</button>
+        <div class="biz-header">
+          <div>
+            <div class="biz-name">${b.name}</div>
+            <div class="biz-type">${b.type}</div>
+          </div>
+          <span class="badge badge-${b.earningType === 'daily' ? 'green' : b.earningType === 'weekly' ? 'blue' : 'gold'}">${b.earningType}</span>
+        </div>
+        <div class="biz-earn">${formatMoney(b.earnings)}</div>
+        <div class="biz-freq">per ${b.earningType} cycle</div>
+        <div class="biz-timer">
+          ⏱ Next payout: <span class="timer-val" data-payout="${b.nextPayout}">calculating...</span>
+        </div>
+        <div class="biz-progress">
+          <div class="biz-progress-fill" style="width:${getProgress(b)}%" data-bizid="${b._id}"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function updateTimers() {
+    document.querySelectorAll('[data-payout]').forEach(el => {
+      el.textContent = getCountdown(el.dataset.payout);
+    });
+    businesses.forEach(b => {
+      const fill = document.querySelector(`[data-bizid="${b._id}"]`);
+      if (fill) fill.style.width = getProgress(b) + '%';
+    });
+  }
+
+  async function loadBusinesses() {
+    try {
+      const data = await api('GET', '/api/user/me');
+      businesses = data.businesses || [];
+      renderSlots(businesses.length);
+      renderBusinesses();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function addBusiness() {
+    const alert = document.getElementById('biz-alert');
+    const btn = document.getElementById('add-biz-btn');
+    const name = document.getElementById('biz-name').value.trim();
+    const type = document.getElementById('biz-type').value;
+    const earnings = document.getElementById('biz-earnings').value;
+    const earningType = document.getElementById('biz-freq').value;
+
+    if (!name || !type || !earnings) return showAlert(alert, 'Please fill all fields');
+    if (businesses.length >= 10) return showAlert(alert, 'Maximum 10 businesses reached');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Launching...';
+    try {
+      await api('POST', '/api/business/add', { name, type, earnings: parseFloat(earnings), earningType });
+      showAlert(alert, 'Business launched! 🎉', 'success');
+      document.getElementById('biz-name').value = '';
+      document.getElementById('biz-earnings').value = '';
+      loadBusinesses();
+    } catch (e) {
+      showAlert(alert, e.message);
+    }
+    btn.disabled = false;
+    btn.textContent = 'Launch Business';
+  }
+
+  async function deleteBusiness(id) {
+    if (!confirm('Remove this business?')) return;
+    try {
+      await api('DELETE', `/api/business/${id}`);
+      loadBusinesses();
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+
+  loadBusinesses();
+  setInterval(updateTimers, 1000);
+  setInterval(loadBusinesses, 60000);
+</script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile — NeoBank</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .profile-header {
+      background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    .profile-avatar-big {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, var(--accent), #0099ff);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--bg);
+      flex-shrink: 0;
+    }
+    .profile-name { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; }
+    .profile-email { color: var(--text2); font-size: 14px; margin-top: 4px; }
+    .profile-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,212,168,0.1); border: 1px solid rgba(0,212,168,0.2); border-radius: 100px; padding: 4px 12px; font-size: 12px; color: var(--accent); margin-top: 10px; }
+    .usage-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+    .usage-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+    }
+    .usage-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .usage-val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--accent); }
+    .usage-unit { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .section-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .info-row:last-child { border-bottom: none; }
+    .info-row .lbl { font-size: 13px; color: var(--text2); }
+    .info-row .val { font-size: 14px; font-weight: 500; }
+    .acct-num { font-family: 'Syne', sans-serif; font-size: 16px; letter-spacing: 2px; color: var(--accent); }
+    .danger-zone { border-color: rgba(255,71,87,0.2) !important; }
+    @media(max-width:768px) { .usage-grid { grid-template-columns: repeat(2,1fr); } }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main fade-in">
+    <div class="page-header">
+      <h1 class="page-title">Profile & Settings</h1>
+      <div class="page-sub">Your account details and app usage</div>
+    </div>
+
+    <!-- Profile header -->
+    <div class="profile-header">
+      <div class="profile-avatar-big" id="prof-avatar">U</div>
+      <div>
+        <div class="profile-name" id="prof-name">Loading...</div>
+        <div class="profile-email" id="prof-email">—</div>
+        <div class="profile-badge">✓ Verified Account</div>
+      </div>
+    </div>
+
+    <!-- App Usage Timer -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="section-title">⏱ App Usage Tracker</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">
+        Based on NeoBank's time system: 1 real hour = 1 virtual day | 7 hours = 1 week | 60 hours = 1 month
+      </div>
+      <div class="usage-grid">
+        <div class="usage-box">
+          <div class="usage-label">Real Time</div>
+          <div class="usage-val" id="use-minutes">0</div>
+          <div class="usage-unit">minutes</div>
+        </div>
+        <div class="usage-box">
+          <div class="usage-label">Virtual Days</div>
+          <div class="usage-val" id="use-days">0</div>
+          <div class="usage-unit">days in-app</div>
+        </div>
+        <div class="usage-box">
+          <div class="usage-label">Virtual Weeks</div>
+          <div class="usage-val" id="use-weeks">0</div>
+          <div class="usage-unit">weeks in-app</div>
+        </div>
+        <div class="usage-box">
+          <div class="usage-label">Virtual Months</div>
+          <div class="usage-val" id="use-months">0</div>
+          <div class="usage-unit">months in-app</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text3);text-align:center">
+        Member since: <span id="member-since">—</span>
+      </div>
+    </div>
+
+    <!-- Account info -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="section-title">Account Details</div>
+      <div class="info-row">
+        <span class="lbl">Full Name</span>
+        <span class="val" id="det-name">—</span>
+      </div>
+      <div class="info-row">
+        <span class="lbl">Email Address</span>
+        <span class="val" id="det-email">—</span>
+      </div>
+      <div class="info-row">
+        <span class="lbl">Account Number</span>
+        <span class="acct-num" id="det-acct">—</span>
+      </div>
+      <div class="info-row">
+        <span class="lbl">Card Expiry</span>
+        <span class="val" id="det-expiry">—</span>
+      </div>
+      <div class="info-row">
+        <span class="lbl">Total Balance</span>
+        <span class="val" id="det-balance" style="color:var(--accent);font-family:'Syne',sans-serif;font-weight:700;font-size:18px">—</span>
+      </div>
+    </div>
+
+    <!-- Quick links -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="section-title">Quick Actions</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <a href="/transfer" class="btn btn-secondary">↗ Send Money</a>
+        <a href="/cards" class="btn btn-secondary">💳 View Card</a>
+        <a href="/business" class="btn btn-secondary">🏢 My Businesses</a>
+        <a href="/history" class="btn btn-secondary">📋 History</a>
+      </div>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="card danger-zone">
+      <div class="section-title" style="color:var(--red)">⚠ Danger Zone</div>
+      <p style="font-size:14px;color:var(--text2);margin-bottom:16px">Actions here cannot be undone.</p>
+      <button class="btn btn-danger" onclick="logout()">Sign Out of Account</button>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/js/sidebar.js"></script>
+<script>
+  if (!auth.requireAuth()) throw new Error();
+  injectSidebar();
+  buildSidebar('/profile');
+  startUsagePing();
+
+  // Track current session minutes
+  let sessionMinutes = 0;
+  let totalMinutes = 0;
+  setInterval(() => {
+    sessionMinutes++;
+    totalMinutes++;
+    updateUsageDisplay(totalMinutes);
+  }, 60000);
+
+  function updateUsageDisplay(minutes) {
+    const u = formatUsage(minutes);
+    document.getElementById('use-minutes').textContent = minutes;
+    document.getElementById('use-days').textContent = u.virtualDays;
+    document.getElementById('use-weeks').textContent = u.virtualWeeks;
+    document.getElementById('use-months').textContent = u.virtualMonths;
+  }
+
+  async function loadProfile() {
+    try {
+      const data = await api('GET', '/api/user/me');
+
+      document.getElementById('prof-avatar').textContent = data.fullName[0].toUpperCase();
+      document.getElementById('prof-name').textContent = data.fullName;
+      document.getElementById('prof-email').textContent = data.email;
+      document.getElementById('det-name').textContent = data.fullName;
+      document.getElementById('det-email').textContent = data.email;
+      document.getElementById('det-acct').textContent = data.accountNumber;
+      document.getElementById('det-expiry').textContent = data.expiry;
+      document.getElementById('det-balance').textContent = formatMoney(data.balance);
+      document.getElementById('member-since').textContent = new Date(data.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+      totalMinutes = data.appUsageMinutes || 0;
+      updateUsageDisplay(totalMinutes);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  loadProfile();
+</script>
+</body>
+</html>

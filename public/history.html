@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>History — NeoBank</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .filter-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+    .filter-btn {
+      padding: 8px 16px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text2);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .filter-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+    .tx-list { display: flex; flex-direction: column; }
+    .date-group { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; padding: 16px 14px 8px; font-weight: 600; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+    .summary-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+    }
+    .summary-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .summary-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main fade-in">
+    <div class="page-header">
+      <h1 class="page-title">Transaction History</h1>
+      <div class="page-sub">All your financial activity in one place</div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-box">
+        <div class="summary-label">Total Received</div>
+        <div class="summary-val" id="sum-received" style="color:var(--accent)">$0</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label">Total Sent</div>
+        <div class="summary-val" id="sum-sent" style="color:var(--red)">$0</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label">Business Income</div>
+        <div class="summary-val" id="sum-biz" style="color:var(--gold)">$0</div>
+      </div>
+    </div>
+
+    <div class="filter-tabs">
+      <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+      <button class="filter-btn" onclick="setFilter('received', this)">↙ Received</button>
+      <button class="filter-btn" onclick="setFilter('sent', this)">↗ Sent</button>
+      <button class="filter-btn" onclick="setFilter('business', this)">🏢 Business</button>
+    </div>
+
+    <div class="card">
+      <div class="tx-list" id="tx-list">
+        <div style="color:var(--text3);padding:24px;text-align:center">Loading transactions...</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/js/sidebar.js"></script>
+<script>
+  if (!auth.requireAuth()) throw new Error();
+  injectSidebar();
+  buildSidebar('/history');
+  startUsagePing();
+
+  let allTxs = [];
+  let currentFilter = 'all';
+
+  const iconMap = { sent: '↗️', received: '↙️', business: '🏢', income: '💰' };
+
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTxs();
+  }
+
+  function groupByDate(txs) {
+    const groups = {};
+    txs.forEach(tx => {
+      const d = new Date(tx.date);
+      const key = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(tx);
+    });
+    return groups;
+  }
+
+  function renderTxs() {
+    const filtered = currentFilter === 'all' ? allTxs : allTxs.filter(tx => tx.type === currentFilter);
+    const el = document.getElementById('tx-list');
+
+    if (!filtered.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">No transactions found</div></div>`;
+      return;
+    }
+
+    const groups = groupByDate(filtered);
+    el.innerHTML = Object.entries(groups).map(([date, txs]) => `
+      <div class="date-group">${date}</div>
+      ${txs.map(tx => {
+        const isPos = tx.type !== 'sent';
+        return `
+          <div class="tx-item">
+            <div class="tx-icon ${tx.type}">${iconMap[tx.type] || '💰'}</div>
+            <div class="tx-info">
+              <div class="tx-desc">${tx.description || tx.type}</div>
+              <div class="tx-date">
+                ${tx.counterparty ? `<span style="color:var(--text2)">${tx.type === 'sent' ? 'To' : 'From'}: ${tx.counterparty}</span> · ` : ''}
+                ${new Date(tx.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
+            <div class="tx-amount ${isPos ? 'pos' : 'neg'}">${isPos ? '+' : '-'}${formatMoney(tx.amount)}</div>
+          </div>
+        `;
+      }).join('')}
+    `).join('');
+  }
+
+  async function loadHistory() {
+    try {
+      const data = await api('GET', '/api/user/me');
+      allTxs = data.transactions || [];
+
+      // Summaries
+      const received = allTxs.filter(t => t.type === 'received').reduce((s, t) => s + t.amount, 0);
+      const sent = allTxs.filter(t => t.type === 'sent').reduce((s, t) => s + t.amount, 0);
+      const biz = allTxs.filter(t => t.type === 'business').reduce((s, t) => s + t.amount, 0);
+
+      document.getElementById('sum-received').textContent = formatMoney(received);
+      document.getElementById('sum-sent').textContent = formatMoney(sent);
+      document.getElementById('sum-biz').textContent = formatMoney(biz);
+
+      renderTxs();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  loadHistory();
+</script>
+</body>
+</html>

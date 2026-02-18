@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeoBank — Modern Banking</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .tabs { display: flex; gap: 4px; background: var(--bg2); border-radius: 12px; padding: 4px; margin-bottom: 28px; }
+    .tab-btn { flex: 1; padding: 10px; border: none; background: none; color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; border-radius: 9px; cursor: pointer; transition: all 0.2s; }
+    .tab-btn.active { background: var(--surface2); color: var(--text); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+    .pin-hint { font-size: 12px; color: var(--text3); margin-top: 6px; }
+    .features { display: flex; gap: 16px; margin-top: 20px; flex-wrap: wrap; }
+    .feature { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+    .hero-section { display: none; }
+    @media(min-width: 900px) {
+      .auth-page { flex-direction: row; align-items: stretch; }
+      .hero-section { display: flex; flex: 1; flex-direction: column; justify-content: center; padding: 60px; }
+      .auth-card { border-radius: 0 24px 24px 0; max-width: 480px; }
+      .auth-bg { background: linear-gradient(135deg, rgba(0,212,168,0.05) 0%, transparent 60%); }
+    }
+    .hero-title { font-size: 52px; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 16px; }
+    .hero-title span { color: var(--accent); }
+    .hero-sub { color: var(--text2); font-size: 16px; max-width: 360px; line-height: 1.7; }
+    .hero-cards { display: flex; gap: 12px; margin-top: 40px; flex-wrap: wrap; }
+    .mini-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; font-size: 13px; }
+    .mini-card .num { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-bg"></div>
+
+  <!-- Hero section (desktop only) -->
+  <div class="hero-section fade-in">
+    <div>
+      <div style="font-size:48px;margin-bottom:20px">🏦</div>
+      <div class="hero-title">Banking<br>for the <span>digital</span><br>generation.</div>
+      <div class="hero-sub">Send money instantly, grow your businesses, track every transaction — all in one place.</div>
+      <div class="hero-cards">
+        <div class="mini-card"><div class="num">10-digit</div>Unique Account</div>
+        <div class="mini-card"><div class="num">Real-time</div>Transfers</div>
+        <div class="mini-card"><div class="num">10</div>Businesses</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth card -->
+  <div class="auth-card fade-in">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">💎</div>
+      <h1>Neo<span>Bank</span></h1>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-btn" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- Login -->
+    <div id="tab-login" class="tab-content active">
+      <div id="login-alert" class="alert"></div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" id="login-email" class="form-control" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="login-pass" class="form-control" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary btn-full btn-lg" id="login-btn" onclick="doLogin()">
+        Sign In
+      </button>
+      <div class="auth-switch">Don't have an account? <a href="#" onclick="switchTab('signup')">Sign up</a></div>
+    </div>
+
+    <!-- Sign Up -->
+    <div id="tab-signup" class="tab-content">
+      <div id="signup-alert" class="alert"></div>
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" id="signup-name" class="form-control" placeholder="John Doe">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" id="signup-email" class="form-control" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="signup-pass" class="form-control" placeholder="Min. 6 characters">
+      </div>
+      <div class="form-group">
+        <label class="form-label">4-Digit PIN</label>
+        <div class="pin-inputs" id="signup-pin-inputs">
+          <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+          <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+          <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+          <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+        </div>
+        <p class="pin-hint">Used to confirm transfers</p>
+      </div>
+      <button class="btn btn-primary btn-full btn-lg" id="signup-btn" onclick="doSignup()">Create Account</button>
+      <div class="auth-switch">Already have an account? <a href="#" onclick="switchTab('login')">Sign in</a></div>
+    </div>
+
+    <div class="features">
+      <div class="feature">🔒 Bank-level security</div>
+      <div class="feature">⚡ Instant transfers</div>
+      <div class="feature">📊 Smart analytics</div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+  // Redirect if already logged in
+  auth.requireGuest();
+
+  // PIN input auto-advance
+  document.querySelectorAll('.pin-digit').forEach((el, i, arr) => {
+    el.addEventListener('input', () => {
+      if (el.value && i < arr.length - 1) arr[i + 1].focus();
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !el.value && i > 0) arr[i - 1].focus();
+    });
+  });
+
+  function switchTab(t) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', (t === 'login' && i === 0) || (t === 'signup' && i === 1));
+    });
+    document.getElementById('tab-login').classList.toggle('active', t === 'login');
+    document.getElementById('tab-signup').classList.toggle('active', t === 'signup');
+  }
+
+  async function doLogin() {
+    const btn = document.getElementById('login-btn');
+    const alert = document.getElementById('login-alert');
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-pass').value;
+
+    if (!email || !password) return showAlert(alert, 'Please fill all fields');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Signing in...';
+    try {
+      const data = await api('POST', '/api/auth/login', { email, password });
+      auth.save(data.token, data.user);
+      window.location.href = '/dashboard';
+    } catch (e) {
+      showAlert(alert, e.message);
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  }
+
+  async function doSignup() {
+    const btn = document.getElementById('signup-btn');
+    const alert = document.getElementById('signup-alert');
+    const fullName = document.getElementById('signup-name').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-pass').value;
+    const pinDigits = [...document.querySelectorAll('.pin-digit')].map(d => d.value);
+    const pin = pinDigits.join('');
+
+    if (!fullName || !email || !password) return showAlert(alert, 'Please fill all fields');
+    if (pin.length !== 4 || !/^\d{4}$/.test(pin)) return showAlert(alert, 'Enter a valid 4-digit PIN');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Creating account...';
+    try {
+      await api('POST', '/api/auth/signup', { fullName, email, password, pin });
+      showAlert(alert, 'Account created! Signing you in...', 'success');
+      setTimeout(async () => {
+        const data = await api('POST', '/api/auth/login', { email, password });
+        auth.save(data.token, data.user);
+        window.location.href = '/dashboard';
+      }, 1000);
+    } catch (e) {
+      showAlert(alert, e.message);
+      btn.disabled = false;
+      btn.textContent = 'Create Account';
+    }
+  }
+
+  // Enter key support
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (document.getElementById('tab-login').classList.contains('active')) doLogin();
+      else doSignup();
+    }
+  });
+</script>
+</body>
+</html>

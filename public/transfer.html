@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transfer — NeoBank</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .transfer-wrap { max-width: 520px; }
+    .recipient-found {
+      background: rgba(0,212,168,0.08);
+      border: 1px solid rgba(0,212,168,0.2);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+      display: none;
+    }
+    .recipient-found.show { display: flex; }
+    .recipient-avatar {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), #0099ff);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--bg);
+      flex-shrink: 0;
+    }
+    .amount-display {
+      font-family: 'Syne', sans-serif;
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      color: var(--text);
+      text-align: center;
+      margin: 16px 0;
+    }
+    .amount-display span { color: var(--accent); }
+    .amount-input-wrap { position: relative; }
+    .amount-prefix { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-family: 'Syne', sans-serif; font-size: 20px; color: var(--text2); }
+    .amount-input { padding-left: 36px !important; font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; }
+    .confirm-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .confirm-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+    .confirm-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+    .confirm-row .label { color: var(--text2); }
+    .confirm-row .val { font-weight: 500; }
+    .steps { display: flex; gap: 0; margin-bottom: 32px; }
+    .step { flex: 1; text-align: center; position: relative; }
+    .step-circle {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600;
+      margin: 0 auto 8px;
+      transition: all 0.3s;
+    }
+    .step.active .step-circle { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+    .step.done .step-circle { background: rgba(0,212,168,0.2); border-color: var(--accent); color: var(--accent); }
+    .step-label { font-size: 11px; color: var(--text3); }
+    .step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 16px; left: calc(50% + 16px);
+      right: calc(-50% + 16px);
+      height: 2px;
+      background: var(--border);
+    }
+    .step-panel { display: none; }
+    .step-panel.active { display: block; animation: fadeIn 0.3s ease; }
+    .success-state { text-align: center; padding: 32px 0; }
+    .success-icon { font-size: 64px; margin-bottom: 16px; animation: fadeIn 0.5s ease; }
+    .success-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+    .success-amount { font-family: 'Syne', sans-serif; font-size: 40px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+    .new-balance { font-size: 14px; color: var(--text2); }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main fade-in">
+    <div class="page-header">
+      <h1 class="page-title">Send Money</h1>
+      <div class="page-sub">Transfer funds to any NeoBank account instantly</div>
+    </div>
+
+    <div class="transfer-wrap">
+      <!-- Steps indicator -->
+      <div class="steps">
+        <div class="step active" id="step-1">
+          <div class="step-circle">1</div>
+          <div class="step-label">Recipient</div>
+        </div>
+        <div class="step" id="step-2">
+          <div class="step-circle">2</div>
+          <div class="step-label">Amount</div>
+        </div>
+        <div class="step" id="step-3">
+          <div class="step-circle">3</div>
+          <div class="step-label">Confirm PIN</div>
+        </div>
+      </div>
+
+      <div id="main-alert" class="alert"></div>
+
+      <!-- Step 1: Recipient -->
+      <div class="card step-panel active" id="panel-1">
+        <h3 style="font-family:'Syne',sans-serif;margin-bottom:20px">Who are you sending to?</h3>
+        <div class="form-group">
+          <label class="form-label">Recipient Account Number</label>
+          <input type="text" id="to-account" class="form-control" placeholder="10-digit account number" maxlength="10" inputmode="numeric" oninput="lookupAccount()">
+          <div class="recipient-found" id="recipient-found">
+            <div class="recipient-avatar" id="recip-avatar">?</div>
+            <div>
+              <div style="font-weight:600" id="recip-name">—</div>
+              <div style="font-size:12px;color:var(--text2)" id="recip-acct">—</div>
+            </div>
+            <span class="badge badge-green" style="margin-left:auto">✓ Found</span>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="step1-next" onclick="goStep(2)" disabled>Continue →</button>
+      </div>
+
+      <!-- Step 2: Amount -->
+      <div class="card step-panel" id="panel-2">
+        <h3 style="font-family:'Syne',sans-serif;margin-bottom:8px">How much?</h3>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Balance: <span id="my-balance" style="color:var(--accent);font-weight:600">$0.00</span></div>
+        <div class="form-group">
+          <label class="form-label">Amount</label>
+          <div class="amount-input-wrap">
+            <span class="amount-prefix">$</span>
+            <input type="number" id="send-amount" class="form-control amount-input" placeholder="0.00" min="0.01" step="0.01" oninput="validateAmount()">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="quickAmount(10)">$10</button>
+          <button class="btn btn-secondary" onclick="quickAmount(50)">$50</button>
+          <button class="btn btn-secondary" onclick="quickAmount(100)">$100</button>
+          <button class="btn btn-secondary" onclick="quickAmount(500)">$500</button>
+        </div>
+        <div style="display:flex;gap:12px">
+          <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
+          <button class="btn btn-primary" id="step2-next" onclick="goStep(3)" disabled style="flex:1">Review Transfer →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: PIN Confirm -->
+      <div class="card step-panel" id="panel-3">
+        <h3 style="font-family:'Syne',sans-serif;margin-bottom:20px">Confirm with PIN</h3>
+        <div class="confirm-box">
+          <div class="confirm-row">
+            <span class="label">Sending to</span>
+            <span class="val" id="confirm-to">—</span>
+          </div>
+          <div class="confirm-row">
+            <span class="label">Account</span>
+            <span class="val" id="confirm-acct">—</span>
+          </div>
+          <div class="confirm-row">
+            <span class="label">Amount</span>
+            <span class="val" id="confirm-amt" style="color:var(--accent);font-family:'Syne',sans-serif;font-size:16px;font-weight:700">—</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="text-align:center;display:block">Enter your 4-digit PIN</label>
+          <div class="pin-inputs" id="pin-inputs">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:20px">
+          <button class="btn btn-secondary" onclick="goStep(2)">← Back</button>
+          <button class="btn btn-primary" id="send-btn" onclick="sendMoney()" style="flex:1" disabled>Send Money 🚀</button>
+        </div>
+      </div>
+
+      <!-- Success -->
+      <div class="card step-panel" id="panel-success">
+        <div class="success-state">
+          <div class="success-icon">✅</div>
+          <div class="success-title">Transfer Complete!</div>
+          <div class="success-amount" id="success-amt" style="color:var(--accent)">—</div>
+          <div class="new-balance">New Balance: <span id="success-balance" style="color:var(--text);font-weight:600">—</span></div>
+          <div style="margin-top:24px;display:flex;gap:12px;justify-content:center">
+            <button class="btn btn-secondary" onclick="resetTransfer()">Send Another</button>
+            <a href="/history" class="btn btn-primary">View History</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/js/sidebar.js"></script>
+<script>
+  if (!auth.requireAuth()) throw new Error();
+  injectSidebar();
+  buildSidebar('/transfer');
+  startUsagePing();
+
+  let recipientData = null;
+  let myBalance = 0;
+  let lookupTimeout = null;
+
+  // Load balance
+  api('GET', '/api/user/me').then(d => {
+    myBalance = d.balance;
+    document.getElementById('my-balance').textContent = formatMoney(myBalance);
+  });
+
+  // PIN auto-advance
+  document.querySelectorAll('.pin-digit').forEach((el, i, arr) => {
+    el.addEventListener('input', () => {
+      if (el.value && i < arr.length - 1) arr[i + 1].focus();
+      checkPin();
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !el.value && i > 0) arr[i - 1].focus();
+    });
+  });
+
+  function checkPin() {
+    const pin = [...document.querySelectorAll('.pin-digit')].map(d => d.value).join('');
+    document.getElementById('send-btn').disabled = pin.length !== 4;
+  }
+
+  function setStep(n) {
+    [1, 2, 3].forEach(i => {
+      document.getElementById(`step-${i}`).className = 'step' + (i === n ? ' active' : i < n ? ' done' : '');
+      document.getElementById(`panel-${i}`)?.classList.toggle('active', i === n);
+    });
+    document.getElementById('panel-success').classList.remove('active');
+  }
+
+  function goStep(n) {
+    setStep(n);
+    if (n === 3) {
+      document.getElementById('confirm-to').textContent = recipientData?.fullName || '—';
+      document.getElementById('confirm-acct').textContent = document.getElementById('to-account').value;
+      document.getElementById('confirm-amt').textContent = formatMoney(document.getElementById('send-amount').value || 0);
+    }
+  }
+
+  function lookupAccount() {
+    clearTimeout(lookupTimeout);
+    const acct = document.getElementById('to-account').value.trim();
+    const found = document.getElementById('recipient-found');
+
+    if (acct.length < 10) {
+      found.classList.remove('show');
+      document.getElementById('step1-next').disabled = true;
+      recipientData = null;
+      return;
+    }
+
+    lookupTimeout = setTimeout(async () => {
+      try {
+        const data = await api('GET', `/api/user/lookup/${acct}`);
+        recipientData = data;
+        found.classList.add('show');
+        document.getElementById('recip-avatar').textContent = data.fullName[0].toUpperCase();
+        document.getElementById('recip-name').textContent = data.fullName;
+        document.getElementById('recip-acct').textContent = data.accountNumber;
+        document.getElementById('step1-next').disabled = false;
+      } catch (e) {
+        found.classList.remove('show');
+        document.getElementById('step1-next').disabled = true;
+        recipientData = null;
+        if (acct.length === 10) showAlert(document.getElementById('main-alert'), e.message);
+      }
+    }, 500);
+  }
+
+  function quickAmount(n) {
+    document.getElementById('send-amount').value = n;
+    validateAmount();
+  }
+
+  function validateAmount() {
+    const amt = parseFloat(document.getElementById('send-amount').value);
+    const ok = amt > 0 && amt <= myBalance;
+    document.getElementById('step2-next').disabled = !ok;
+    if (amt > myBalance) showAlert(document.getElementById('main-alert'), 'Insufficient balance');
+  }
+
+  async function sendMoney() {
+    const btn = document.getElementById('send-btn');
+    const pin = [...document.querySelectorAll('.pin-digit')].map(d => d.value).join('');
+    const amount = parseFloat(document.getElementById('send-amount').value);
+    const toAccountNumber = document.getElementById('to-account').value.trim();
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Sending...';
+
+    try {
+      const result = await api('POST', '/api/transfer/send', { toAccountNumber, amount, pin });
+
+      // Show success
+      [1, 2, 3].forEach(i => {
+        document.getElementById(`step-${i}`).className = 'step done';
+        document.getElementById(`panel-${i}`).classList.remove('active');
+      });
+      document.getElementById('panel-success').classList.add('active');
+      document.getElementById('success-amt').textContent = formatMoney(amount);
+      document.getElementById('success-balance').textContent = formatMoney(result.newBalance);
+      myBalance = result.newBalance;
+      document.getElementById('my-balance').textContent = formatMoney(myBalance);
+    } catch (e) {
+      showAlert(document.getElementById('main-alert'), e.message);
+      btn.disabled = false;
+      btn.textContent = 'Send Money 🚀';
+    }
+  }
+
+  function resetTransfer() {
+    document.getElementById('to-account').value = '';
+    document.getElementById('send-amount').value = '';
+    document.querySelectorAll('.pin-digit').forEach(d => d.value = '');
+    recipientData = null;
+    document.getElementById('recipient-found').classList.remove('show');
+    document.getElementById('step1-next').disabled = true;
+    document.getElementById('step2-next').disabled = true;
+    document.getElementById('send-btn').disabled = true;
+    setStep(1);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — NeoBank</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .balance-card {
+      background: linear-gradient(135deg, #00d4a8 0%, #0099cc 100%);
+      border-radius: 20px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .balance-card::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+    }
+    .balance-card::after {
+      content: '';
+      position: absolute;
+      bottom: -80px; left: 40px;
+      width: 240px; height: 240px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50%;
+    }
+    .balance-label { font-size: 13px; font-weight: 500; color: rgba(0,0,0,0.6); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .balance-amount { font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; color: #fff; letter-spacing: -2px; position: relative; z-index: 1; }
+    .balance-acct { font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px; letter-spacing: 2px; }
+    .balance-actions { display: flex; gap: 12px; margin-top: 20px; position: relative; z-index: 1; }
+    .balance-btn {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 10px;
+      color: white;
+      padding: 10px 18px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .balance-btn:hover { background: rgba(0,0,0,0.3); }
+    .recent-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .see-all { font-size: 13px; color: var(--accent); }
+    .biz-preview { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+    .biz-mini {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      min-width: 180px;
+      flex-shrink: 0;
+    }
+    .biz-mini-name { font-weight: 600; margin-bottom: 4px; font-size: 14px; }
+    .biz-mini-earn { color: var(--accent); font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+    .biz-mini-timer { font-size: 12px; color: var(--text3); margin-top: 6px; }
+    .greeting { font-size: 14px; color: var(--text2); margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main fade-in">
+    <div class="page-header">
+      <div class="greeting" id="greeting">Good morning 👋</div>
+      <h1 class="page-title" id="welcome-name">Welcome back</h1>
+      <div class="page-sub" id="acct-display">Loading your account...</div>
+    </div>
+
+    <!-- Balance card -->
+    <div class="balance-card">
+      <div class="balance-label">Total Balance</div>
+      <div class="balance-amount" id="balance-amount">$0.00</div>
+      <div class="balance-acct" id="balance-acct">Account: ——————————</div>
+      <div class="balance-actions">
+        <a href="/transfer" class="balance-btn">↗ Send Money</a>
+        <a href="/history" class="balance-btn">📋 History</a>
+        <a href="/cards" class="balance-btn">💳 View Card</a>
+      </div>
+    </div>
+
+    <!-- Stats grid -->
+    <div class="grid-4" style="margin-bottom:24px">
+      <div class="stat-card">
+        <div class="stat-label">Total Businesses</div>
+        <div class="stat-value" id="stat-biz">0</div>
+        <div class="stat-icon" style="background:rgba(245,200,66,0.1)">🏢</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Cards</div>
+        <div class="stat-value" id="stat-cards">1</div>
+        <div class="stat-icon" style="background:rgba(61,139,255,0.1)">💳</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Transfers Sent</div>
+        <div class="stat-value accent" id="stat-transfers">0</div>
+        <div class="stat-icon" style="background:var(--accent-glow)">↗</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Transactions</div>
+        <div class="stat-value" id="stat-txs">0</div>
+        <div class="stat-icon" style="background:rgba(255,71,87,0.1)">📊</div>
+      </div>
+    </div>
+
+    <!-- Businesses preview -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="recent-header">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px">Active Businesses</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:2px">Earning while you sleep</div>
+        </div>
+        <a href="/business" class="see-all">Manage →</a>
+      </div>
+      <div class="biz-preview" id="biz-preview">
+        <div style="color:var(--text3);font-size:14px;padding:16px">No businesses yet. <a href="/business">Add one →</a></div>
+      </div>
+    </div>
+
+    <!-- Recent transactions -->
+    <div class="card">
+      <div class="recent-header">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px">Recent Activity</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:2px">Your latest transactions</div>
+        </div>
+        <a href="/history" class="see-all">See all →</a>
+      </div>
+      <div id="recent-txs">
+        <div style="color:var(--text3);font-size:14px;padding:16px">Loading transactions...</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/js/sidebar.js"></script>
+<script>
+  if (!auth.requireAuth()) throw new Error();
+  injectSidebar();
+  buildSidebar('/dashboard');
+  startUsagePing();
+
+  const iconMap = { sent: '↗', received: '↙', business: '🏢', income: '💰' };
+  const txIcons = { sent: '↗️', received: '↙️', business: '🏢', income: '💰' };
+
+  // Greeting
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('greeting').textContent = greet + ' 👋';
+
+  let userData = null;
+  let bizTimerInterval = null;
+
+  function renderBizPreview(businesses) {
+    const el = document.getElementById('biz-preview');
+    if (!businesses?.length) {
+      el.innerHTML = `<div style="color:var(--text3);font-size:14px;padding:8px">No businesses yet. <a href="/business">Add one →</a></div>`;
+      return;
+    }
+    el.innerHTML = businesses.map(b => `
+      <div class="biz-mini">
+        <div class="biz-mini-name">${b.name}</div>
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">${b.type} · ${b.earningType}</div>
+        <div class="biz-mini-earn">${formatMoney(b.earnings)}</div>
+        <div class="biz-mini-timer" data-payout="${b.nextPayout}">⏱ calculating...</div>
+      </div>
+    `).join('');
+  }
+
+  function renderTxs(txs) {
+    const el = document.getElementById('recent-txs');
+    const recent = txs.slice(0, 8);
+    if (!recent.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">No transactions yet</div></div>`;
+      return;
+    }
+    el.innerHTML = recent.map(tx => {
+      const isPos = tx.type !== 'sent';
+      return `
+        <div class="tx-item">
+          <div class="tx-icon ${tx.type}">${txIcons[tx.type] || '💰'}</div>
+          <div class="tx-info">
+            <div class="tx-desc">${tx.description || tx.type}</div>
+            <div class="tx-date">${formatDate(tx.date)}</div>
+          </div>
+          <div class="tx-amount ${isPos ? 'pos' : 'neg'}">${isPos ? '+' : '-'}${formatMoney(tx.amount)}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function updateTimers() {
+    document.querySelectorAll('[data-payout]').forEach(el => {
+      el.textContent = '⏱ ' + getCountdown(el.dataset.payout);
+    });
+  }
+
+  async function loadDashboard() {
+    try {
+      const data = await api('GET', '/api/user/me');
+      userData = data;
+
+      // Update auth user cache
+      const u = auth.user();
+      auth.save(auth.token(), { ...u, fullName: data.fullName, email: data.email, accountNumber: data.accountNumber });
+
+      document.getElementById('welcome-name').textContent = data.fullName;
+      document.getElementById('acct-display').textContent = `Account #${data.accountNumber}`;
+      document.getElementById('balance-amount').textContent = formatMoney(data.balance);
+      document.getElementById('balance-acct').textContent = `Account: ${data.accountNumber}`;
+      document.getElementById('stat-biz').textContent = data.businesses?.length || 0;
+      document.getElementById('stat-transfers').textContent = data.totalTransfersSent || 0;
+      document.getElementById('stat-txs').textContent = data.transactions?.length || 0;
+
+      renderBizPreview(data.businesses);
+      renderTxs(data.transactions || []);
+
+      if (!bizTimerInterval) {
+        bizTimerInterval = setInterval(updateTimers, 1000);
+      }
+      updateTimers();
+    } catch (e) {
+      console.error(e);
+      if (e.message === 'Invalid token') logout();
+    }
+  }
+
+  loadDashboard();
+  setInterval(loadDashboard, 30000); // Refresh every 30s for business payouts
+</script>
+</body>
+</html>
