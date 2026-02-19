@@ -52,6 +52,18 @@
     .tab-row { display: flex; gap: 4px; background: var(--bg2); border-radius: 12px; padding: 4px; margin-bottom: 24px; }
     .tab-row-btn { flex: 1; padding: 10px; border: none; background: none; color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; border-radius: 9px; cursor: pointer; transition: all 0.2s; }
     .tab-row-btn.active { background: var(--surface2); color: var(--text); }
+    /* Recurring timer styles */
+    .recurring-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 100px; background: rgba(249,115,22,0.15); border: 1px solid #f97316; color: #f97316; margin-bottom: 8px; }
+    .cooldown-overlay { position: absolute; top: 12px; right: 12px; background: rgba(249,115,22,0.15); border: 1px solid #f97316; color: #f97316; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 100px; }
+    .timer-bar-wrap { margin: 8px 0; }
+    .timer-bar-bg { background: var(--surface2); border-radius: 4px; height: 4px; overflow: hidden; margin-bottom: 4px; }
+    .timer-bar-fill { height: 4px; border-radius: 4px; background: linear-gradient(90deg, #f97316, #fbbf24); transition: width 1s linear; }
+    .timer-text { font-size: 11px; color: #f97316; font-weight: 600; }
+    .due-soon { animation: pulse-orange 1s infinite; }
+    @keyframes pulse-orange { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+    .my-item.recurring { border-color: rgba(249,115,22,0.4); }
+    .my-item-timer { font-size: 10px; color: #f97316; font-weight: 600; margin-top: 4px; }
+    .my-item-timer.overdue { color: var(--red); animation: pulse-orange 0.5s infinite; }
   </style>
 </head>
 <body>
@@ -316,27 +328,27 @@ const SHOP_ITEMS = [
   { id:'jwl15', cat:'Jewellery', name:'Hublot Big Bang Unico Sapphire', emoji:'⌚', desc:'Transparent case, skeleton dial', price:95000000 },
 
   // BILLS & SERVICES
-  { id:'bill1', cat:'Bills', name:'EKEDC Electricity Bill', emoji:'⚡', desc:'Monthly prepaid units - 50,000 units', price:25000 },
-  { id:'bill2', cat:'Bills', name:'DSTV Compact Plus Subscription', emoji:'📺', desc:'6 months subscription, premium channels', price:60000 },
-  { id:'bill3', cat:'Bills', name:'MTN Data Bundle 100GB', emoji:'📱', desc:'30-day validity, 4G/5G data', price:30000 },
-  { id:'bill4', cat:'Bills', name:'Airtel Unlimited Call Plan', emoji:'📞', desc:'Monthly unlimited calls & 50GB data', price:20000 },
-  { id:'bill5', cat:'Bills', name:'LAWMA Waste Management Annual', emoji:'🗑️', desc:'Annual residential waste collection', price:48000 },
-  { id:'bill6', cat:'Bills', name:'Lagos State LUC Property Tax', emoji:'🏛️', desc:'Annual land use charge', price:150000 },
-  { id:'bill7', cat:'Bills', name:'Car Insurance Comprehensive', emoji:'🚗', desc:'Full coverage, 1 year, up to ₦50M vehicle', price:450000 },
-  { id:'bill8', cat:'Bills', name:'NHIS Health Insurance Premium', emoji:'🏥', desc:'Annual family health coverage', price:120000 },
-  { id:'bill9', cat:'Bills', name:'Water Bill Annual LSWC', emoji:'💧', desc:'Annual Lagos water corporation bill', price:36000 },
-  { id:'bill10', cat:'Bills', name:'Starlink Internet Subscription', emoji:'🛰️', desc:'12 months premium high-speed satellite', price:960000 },
+  { id:'bill1', cat:'Bills', name:'EKEDC Electricity Bill', emoji:'⚡', desc:'Monthly prepaid units - 50,000 units', price:25000, recurring:'monthly', cooldownHrs:60 },
+  { id:'bill2', cat:'Bills', name:'DSTV Compact Plus Subscription', emoji:'📺', desc:'6 months subscription, premium channels', price:60000, recurring:'6months', cooldownHrs:240 },
+  { id:'bill3', cat:'Bills', name:'MTN Data Bundle 100GB', emoji:'📱', desc:'30-day validity, 4G/5G data', price:30000, recurring:'monthly', cooldownHrs:60 },
+  { id:'bill4', cat:'Bills', name:'Airtel Unlimited Call Plan', emoji:'📞', desc:'Monthly unlimited calls & 50GB data', price:20000, recurring:'monthly', cooldownHrs:60 },
+  { id:'bill5', cat:'Bills', name:'LAWMA Waste Management Annual', emoji:'🗑️', desc:'Annual residential waste collection', price:48000, recurring:'annual', cooldownHrs:672 },
+  { id:'bill6', cat:'Bills', name:'Lagos State LUC Property Tax', emoji:'🏛️', desc:'Annual land use charge', price:150000, recurring:'annual', cooldownHrs:672 },
+  { id:'bill7', cat:'Bills', name:'Car Insurance Comprehensive', emoji:'🚗', desc:'Full coverage, 1 year, up to ₦50M vehicle', price:450000, recurring:'annual', cooldownHrs:672 },
+  { id:'bill8', cat:'Bills', name:'NHIS Health Insurance Premium', emoji:'🏥', desc:'Annual family health coverage', price:120000, recurring:'annual', cooldownHrs:672 },
+  { id:'bill9', cat:'Bills', name:'Water Bill Annual LSWC', emoji:'💧', desc:'Annual Lagos water corporation bill', price:36000, recurring:'annual', cooldownHrs:672 },
+  { id:'bill10', cat:'Bills', name:'Starlink Internet Subscription', emoji:'🛰️', desc:'12 months premium high-speed satellite', price:960000, recurring:'annual', cooldownHrs:672 },
 
   // SCHOOL FEES
-  { id:'school1', cat:'School Fees', name:'University of Lagos Tuition', emoji:'🎓', desc:'Full year tuition, engineering faculty', price:180000 },
-  { id:'school2', cat:'School Fees', name:'Covenant University Annual Fees', emoji:'🏫', desc:'All inclusive, private university', price:1200000 },
-  { id:'school3', cat:'School Fees', name:'American University of Nigeria', emoji:'🎓', desc:'One semester, full tuition', price:2500000 },
-  { id:'school4', cat:'School Fees', name:'Harvard University Tuition', emoji:'🏛️', desc:'One semester, undergraduate', price:30000000 },
-  { id:'school5', cat:'School Fees', name:'Oxford University Tuition', emoji:'🏛️', desc:'One year, postgraduate program', price:25000000 },
-  { id:'school6', cat:'School Fees', name:'British International School Lagos', emoji:'🏫', desc:'Annual fees, secondary section', price:3500000 },
-  { id:'school7', cat:'School Fees', name:'Avi-Cenna International School', emoji:'🏫', desc:'Annual nursery/primary fees', price:1800000 },
-  { id:'school8', cat:'School Fees', name:'WAEC Registration Fees', emoji:'📝', desc:'9 subjects, full registration', price:22000 },
-  { id:'school9', cat:'School Fees', name:'JAMB UTME Registration', emoji:'📝', desc:'Full UTME registration + textbook', price:5000 },
+  { id:'school1', cat:'School Fees', name:'University of Lagos Tuition', emoji:'🎓', desc:'Full year tuition, engineering faculty', price:180000, recurring:'annual', cooldownHrs:672 },
+  { id:'school2', cat:'School Fees', name:'Covenant University Annual Fees', emoji:'🏫', desc:'All inclusive, private university', price:1200000, recurring:'annual', cooldownHrs:672 },
+  { id:'school3', cat:'School Fees', name:'American University of Nigeria', emoji:'🎓', desc:'One semester, full tuition', price:2500000, recurring:'6months', cooldownHrs:240 },
+  { id:'school4', cat:'School Fees', name:'Harvard University Tuition', emoji:'🏛️', desc:'One semester, undergraduate', price:30000000, recurring:'6months', cooldownHrs:240 },
+  { id:'school5', cat:'School Fees', name:'Oxford University Tuition', emoji:'🏛️', desc:'One year, postgraduate program', price:25000000, recurring:'annual', cooldownHrs:672 },
+  { id:'school6', cat:'School Fees', name:'British International School Lagos', emoji:'🏫', desc:'Annual fees, secondary section', price:3500000, recurring:'annual', cooldownHrs:672 },
+  { id:'school7', cat:'School Fees', name:'Avi-Cenna International School', emoji:'🏫', desc:'Annual nursery/primary fees', price:1800000, recurring:'annual', cooldownHrs:672 },
+  { id:'school8', cat:'School Fees', name:'WAEC Registration Fees', emoji:'📝', desc:'9 subjects, full registration', price:22000, recurring:'annual', cooldownHrs:672 },
+  { id:'school9', cat:'School Fees', name:'JAMB UTME Registration', emoji:'📝', desc:'Full UTME registration + textbook', price:5000, recurring:'annual', cooldownHrs:672 },
   { id:'school10', cat:'School Fees', name:'MBA Program - Lagos Business School', emoji:'🎓', desc:'Full MBA program tuition', price:6500000 },
 
   // WEDDINGS
@@ -364,38 +376,38 @@ const SHOP_ITEMS = [
   { id:'party10', cat:'Parties', name:'Surprise Party Planning Service', emoji:'🎊', desc:'Full planning, coordination, decorations', price:600000 },
 
   // TAXES
-  { id:'tax1', cat:'Taxes', name:'Personal Income Tax Annual (PAYE)', emoji:'📊', desc:'Annual PAYE tax filing and payment', price:500000 },
-  { id:'tax2', cat:'Taxes', name:'Company Income Tax Filing', emoji:'🏢', desc:'CIT computation and payment to FIRS', price:1500000 },
-  { id:'tax3', cat:'Taxes', name:'VAT Returns Quarterly', emoji:'📋', desc:'Quarterly VAT computation and filing', price:200000 },
-  { id:'tax4', cat:'Taxes', name:'Capital Gains Tax', emoji:'📈', desc:'CGT on property/asset sale', price:750000 },
-  { id:'tax5', cat:'Taxes', name:'Withholding Tax Remittance', emoji:'💰', desc:'Monthly WHT remittance to FIRS', price:300000 },
-  { id:'tax6', cat:'Taxes', name:'Lagos State Development Levy', emoji:'🏛️', desc:'Annual development levy', price:20000 },
-  { id:'tax7', cat:'Taxes', name:'Tax Clearance Certificate', emoji:'📜', desc:'3-year TCC from FIRS', price:50000 },
-  { id:'tax8', cat:'Taxes', name:'Business Premises Levy', emoji:'🏪', desc:'Annual business premises registration', price:75000 },
+  { id:'tax1', cat:'Taxes', name:'Personal Income Tax Annual (PAYE)', emoji:'📊', desc:'Annual PAYE tax filing and payment', price:500000, recurring:'annual', cooldownHrs:672 },
+  { id:'tax2', cat:'Taxes', name:'Company Income Tax Filing', emoji:'🏢', desc:'CIT computation and payment to FIRS', price:1500000, recurring:'annual', cooldownHrs:672 },
+  { id:'tax3', cat:'Taxes', name:'VAT Returns Quarterly', emoji:'📋', desc:'Quarterly VAT computation and filing', price:200000, recurring:'quarterly', cooldownHrs:168 },
+  { id:'tax4', cat:'Taxes', name:'Capital Gains Tax', emoji:'📈', desc:'CGT on property/asset sale', price:750000, recurring:'annual', cooldownHrs:672 },
+  { id:'tax5', cat:'Taxes', name:'Withholding Tax Remittance', emoji:'💰', desc:'Monthly WHT remittance to FIRS', price:300000, recurring:'monthly', cooldownHrs:60 },
+  { id:'tax6', cat:'Taxes', name:'Lagos State Development Levy', emoji:'🏛️', desc:'Annual development levy', price:20000, recurring:'annual', cooldownHrs:672 },
+  { id:'tax7', cat:'Taxes', name:'Tax Clearance Certificate', emoji:'📜', desc:'3-year TCC from FIRS', price:50000, recurring:'3years', cooldownHrs:2016 },
+  { id:'tax8', cat:'Taxes', name:'Business Premises Levy', emoji:'🏪', desc:'Annual business premises registration', price:75000, recurring:'annual', cooldownHrs:672 },
 
   // MORE BILLS
-  { id:'bill11', cat:'Bills', name:'Glo 5G Unlimited Plan', emoji:'📡', desc:'Monthly 5G unlimited data + calls', price:15000 },
-  { id:'bill12', cat:'Bills', name:'Netflix Premium Annual Subscription', emoji:'🎬', desc:'12 months premium, 4K, 4 screens', price:56000 },
-  { id:'bill13', cat:'Bills', name:'Spotify Premium Annual', emoji:'🎵', desc:'12 months premium music streaming', price:24000 },
-  { id:'bill14', cat:'Bills', name:'Generator Diesel Monthly', emoji:'⛽', desc:'Monthly fuel for 10KVA generator', price:180000 },
-  { id:'bill15', cat:'Bills', name:'Building Estate Service Charge', emoji:'🏘️', desc:'Annual estate maintenance levy', price:480000 },
-  { id:'bill16', cat:'Bills', name:'Spectranet 100Mbps Fibre Annual', emoji:'🌐', desc:'12 months fibre broadband', price:240000 },
+  { id:'bill11', cat:'Bills', name:'Glo 5G Unlimited Plan', emoji:'📡', desc:'Monthly 5G unlimited data + calls', price:15000, recurring:'monthly', cooldownHrs:60 },
+  { id:'bill12', cat:'Bills', name:'Netflix Premium Annual Subscription', emoji:'🎬', desc:'12 months premium, 4K, 4 screens', price:56000, recurring:'annual', cooldownHrs:672 },
+  { id:'bill13', cat:'Bills', name:'Spotify Premium Annual', emoji:'🎵', desc:'12 months premium music streaming', price:24000, recurring:'annual', cooldownHrs:672 },
+  { id:'bill14', cat:'Bills', name:'Generator Diesel Monthly', emoji:'⛽', desc:'Monthly fuel for 10KVA generator', price:180000, recurring:'monthly', cooldownHrs:60 },
+  { id:'bill15', cat:'Bills', name:'Building Estate Service Charge', emoji:'🏘️', desc:'Annual estate maintenance levy', price:480000, recurring:'annual', cooldownHrs:672 },
+  { id:'bill16', cat:'Bills', name:'Spectranet 100Mbps Fibre Annual', emoji:'🌐', desc:'12 months fibre broadband', price:240000, recurring:'annual', cooldownHrs:672 },
   { id:'bill17', cat:'Bills', name:'Emirates Lagos-Dubai Business Return', emoji:'✈️', desc:'Return business class ticket', price:1500000 },
   { id:'bill18', cat:'Bills', name:'British Airways Lagos-London First Class', emoji:'✈️', desc:'Return first class ticket', price:3200000 },
 
   // MORE TAXES
-  { id:'tax9', cat:'Taxes', name:'Digital Services Tax Filing', emoji:'💻', desc:'DST compliance for tech companies', price:400000 },
-  { id:'tax10', cat:'Taxes', name:'Import Duty Payment', emoji:'🚢', desc:'Customs duty for imported goods', price:650000 },
-  { id:'tax11', cat:'Taxes', name:'Excise Duty on Luxury Goods', emoji:'👜', desc:'Government excise on luxury purchases', price:200000 },
-  { id:'tax12', cat:'Taxes', name:'Transfer Pricing Compliance', emoji:'📊', desc:'Annual TP documentation & filing', price:1000000 },
+  { id:'tax9', cat:'Taxes', name:'Digital Services Tax Filing', emoji:'💻', desc:'DST compliance for tech companies', price:400000, recurring:'annual', cooldownHrs:672 },
+  { id:'tax10', cat:'Taxes', name:'Import Duty Payment', emoji:'🚢', desc:'Customs duty for imported goods', price:650000, recurring:'quarterly', cooldownHrs:168 },
+  { id:'tax11', cat:'Taxes', name:'Excise Duty on Luxury Goods', emoji:'👜', desc:'Government excise on luxury purchases', price:200000, recurring:'annual', cooldownHrs:672 },
+  { id:'tax12', cat:'Taxes', name:'Transfer Pricing Compliance', emoji:'📊', desc:'Annual TP documentation & filing', price:1000000, recurring:'annual', cooldownHrs:672 },
 
   // FOOD & DINING
   { id:'food1', cat:'Food & Dining', name:'Nobu Lagos Private Dinner', emoji:'🍱', desc:'10-course omakase for 4, chef\'s table', price:800000 },
   { id:'food2', cat:'Food & Dining', name:'Jikoni Restaurant Private Reservation', emoji:'🍽️', desc:'Luxury Lagos fine dining, 6 guests', price:350000 },
   { id:'food3', cat:'Food & Dining', name:'Dubai Burj Al Arab Sunday Brunch', emoji:'🏨', desc:'Gold plated dining experience', price:500000 },
-  { id:'food4', cat:'Food & Dining', name:'Weekly Luxury Grocery Delivery', emoji:'🛒', desc:'Premium organic groceries for household', price:120000 },
-  { id:'food5', cat:'Food & Dining', name:'Private Chef Monthly Service', emoji:'👨‍🍳', desc:'Full-time private chef, 30 days', price:600000 },
-  { id:'food6', cat:'Food & Dining', name:'Petite Cuisine Catering Monthly', emoji:'🍴', desc:'Meal prep & delivery, family of 5', price:180000 },
+  { id:'food4', cat:'Food & Dining', name:'Weekly Luxury Grocery Delivery', emoji:'🛒', desc:'Premium organic groceries for household', price:120000, recurring:'weekly', cooldownHrs:7 },
+  { id:'food5', cat:'Food & Dining', name:'Private Chef Monthly Service', emoji:'👨‍🍳', desc:'Full-time private chef, 30 days', price:600000, recurring:'monthly', cooldownHrs:60 },
+  { id:'food6', cat:'Food & Dining', name:'Petite Cuisine Catering Monthly', emoji:'🍴', desc:'Meal prep & delivery, family of 5', price:180000, recurring:'monthly', cooldownHrs:60 },
   { id:'food7', cat:'Food & Dining', name:'Michelin Star Pop-Up Dinner', emoji:'⭐', desc:'3 Michelin star chef, 20 guests', price:2000000 },
   { id:'food8', cat:'Food & Dining', name:'VIP Lagos Restaurant Week Pass', emoji:'🎟️', desc:'All restaurants, VIP treatment', price:75000 },
 
@@ -418,13 +430,52 @@ let searchQuery = '';
 let myBalance = 0;
 let ownedItems = JSON.parse(localStorage.getItem('neo_owned_' + (auth.user()?.accountNumber || 'x')) || '[]');
 let purchasingItem = null;
+let timerInterval = null;
 
 function saveOwned() {
   localStorage.setItem('neo_owned_' + (auth.user()?.accountNumber || 'x'), JSON.stringify(ownedItems));
 }
 
-function isOwned(id) {
+function getCooldownRemaining(ownedEntry, item) {
+  if (!item.recurring || !item.cooldownHrs) return 0;
+  if (!ownedEntry || !ownedEntry.purchasedAt) return 0;
+  const cooldownMs = item.cooldownHrs * 60 * 60 * 1000;
+  const elapsed = Date.now() - ownedEntry.purchasedAt;
+  return Math.max(0, cooldownMs - elapsed);
+}
+
+function isOnCooldown(id) {
+  const item = SHOP_ITEMS.find(i => i.id === id);
+  if (!item || !item.recurring) return false;
+  const entry = ownedItems.find(o => o.id === id);
+  if (!entry) return false;
+  return getCooldownRemaining(entry, item) > 0;
+}
+
+function isPermanentlyOwned(id) {
+  const item = SHOP_ITEMS.find(i => i.id === id);
+  if (!item || item.recurring) return false;
   return ownedItems.some(o => o.id === id);
+}
+
+function formatCountdown(ms) {
+  if (ms <= 0) return 'Ready now!';
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return h + 'h ' + m + 'm ' + s + 's';
+  if (m > 0) return m + 'm ' + s + 's';
+  return s + 's';
+}
+
+function getRecurringLabel(item) {
+  const map = { daily:'Daily', weekly:'Weekly', monthly:'Monthly', quarterly:'Quarterly', '6months':'Every 6 Months', annual:'Annual', '3years':'Every 3 Years' };
+  return map[item.recurring] || item.recurring;
+}
+
+function isOwned(id) {
+  return isPermanentlyOwned(id) || isOnCooldown(id);
 }
 
 function renderCategories() {
@@ -467,18 +518,46 @@ function renderShopGrid() {
     return;
   }
   grid.innerHTML = items.map(item => {
-    const owned = isOwned(item.id);
+    const permOwned = isPermanentlyOwned(item.id);
+    const onCooldown = isOnCooldown(item.id);
     const canAfford = myBalance >= item.price;
+    const entry = ownedItems.find(o => o.id === item.id);
+    const msLeft = entry ? getCooldownRemaining(entry, item) : 0;
+    const pct = item.cooldownHrs ? Math.round((1 - msLeft/(item.cooldownHrs*3600000))*100) : 0;
+
+    let badge = '';
+    if (permOwned) badge = '<div class="owned-badge">✓ Owned</div>';
+    else if (onCooldown) badge = '<div class="cooldown-overlay">⏱ Active</div>';
+
+    let timerHtml = '';
+    if (item.recurring) {
+      timerHtml = `<div class="recurring-badge">🔄 ${getRecurringLabel(item)}</div>`;
+    }
+    if (onCooldown && msLeft > 0) {
+      const dueSoon = msLeft < 3600000;
+      timerHtml += `
+        <div class="timer-bar-wrap">
+          <div class="timer-bar-bg"><div class="timer-bar-fill" style="width:${pct}%"></div></div>
+          <div class="timer-text ${dueSoon ? 'due-soon' : ''}" data-item-id="${item.id}">⏱ ${formatCountdown(msLeft)} remaining</div>
+        </div>`;
+    } else if (item.recurring && entry && msLeft === 0) {
+      timerHtml += `<div class="timer-text" style="color:var(--accent)">✅ Due now — pay again!</div>`;
+    }
+
+    const btnDisabled = permOwned || onCooldown;
+    let btnText = onCooldown ? '⏱ Active' : permOwned ? '✓ Purchased' : canAfford ? '🛒 Buy Now' : '💸 Insufficient Balance';
+
     return `
       <div class="shop-item">
-        ${owned ? '<div class="owned-badge">✓ Owned</div>' : ''}
+        ${badge}
         <span class="item-emoji">${item.emoji}</span>
         <div class="item-category">${item.cat}</div>
         <div class="item-name">${item.name}</div>
         <div class="item-desc">${item.desc}</div>
+        ${timerHtml}
         <div class="item-price">${formatMoney(item.price)}</div>
-        <button class="buy-btn" onclick="openBuyModal('${item.id}')" ${owned ? 'disabled' : ''}>
-          ${owned ? '✓ Purchased' : canAfford ? '🛒 Buy Now' : '💸 Insufficient Balance'}
+        <button class="buy-btn" onclick="openBuyModal('${item.id}')" ${btnDisabled ? 'disabled' : ''}>
+          ${btnText}
         </button>
       </div>
     `;
@@ -487,23 +566,32 @@ function renderShopGrid() {
 
 function renderOwnedItems() {
   const el = document.getElementById('owned-grid');
-  document.getElementById('owned-count').textContent = `${ownedItems.length} items owned`;
-  if (!ownedItems.length) {
+  const count = ownedItems.length;
+  document.getElementById('owned-count').textContent = count + ' items owned';
+  if (!count) {
     el.innerHTML = `<div class="empty"><div class="empty-icon">🛍️</div><div class="empty-title">No purchases yet</div><p style="color:var(--text2);font-size:14px">Go to the shop and buy something!</p></div>`;
     return;
   }
   el.innerHTML = `
-    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;margin-bottom:16px">🏆 My Purchases (${ownedItems.length})</div>
+    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;margin-bottom:16px">🏆 My Purchases (${count})</div>
     <div class="my-items-grid">
       ${ownedItems.map(o => {
         const item = SHOP_ITEMS.find(i => i.id === o.id);
         if (!item) return '';
+        const msLeft = getCooldownRemaining(o, item);
+        const overdue = item.recurring && o.purchasedAt && msLeft === 0;
+        const active = item.recurring && msLeft > 0;
+        let timerBit = '';
+        if (active) timerBit = '<div class="my-item-timer" data-item-id="' + item.id + '">⏱ ' + formatCountdown(msLeft) + '</div>';
+        else if (overdue) timerBit = '<div class="my-item-timer overdue">⚠️ Due now!</div>';
         return `
-          <div class="my-item">
+          <div class="my-item ${item.recurring ? 'recurring' : ''}">
             <div class="my-item-emoji">${item.emoji}</div>
             <div class="my-item-name">${item.name}</div>
             <div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:4px">${formatMoney(item.price)}</div>
-            <div class="my-item-date">${new Date(o.date).toLocaleDateString()}</div>
+            ${item.recurring ? '<div style="font-size:10px;color:#f97316;margin-bottom:2px">🔄 ' + getRecurringLabel(item) + '</div>' : ''}
+            ${timerBit}
+            <div class="my-item-date">${new Date(o.date || o.purchasedAt).toLocaleDateString()}</div>
           </div>
         `;
       }).join('')}
@@ -583,8 +671,15 @@ async function confirmPurchase() {
       itemId: purchasingItem.id
     });
 
-    // Save to owned
-    ownedItems.unshift({ id: purchasingItem.id, date: new Date().toISOString() });
+    // Save to owned — for recurring items, update existing entry; for one-time, add new
+    const now = Date.now();
+    const existIdx = ownedItems.findIndex(o => o.id === purchasingItem.id);
+    const newEntry = { id: purchasingItem.id, date: new Date().toISOString(), purchasedAt: now };
+    if (existIdx >= 0) {
+      ownedItems[existIdx] = newEntry; // Reset timer for recurring
+    } else {
+      ownedItems.unshift(newEntry);
+    }
     saveOwned();
     myBalance = result.newBalance;
     document.getElementById('shop-balance').textContent = formatMoney(myBalance);
@@ -617,6 +712,34 @@ async function init() {
 
   renderCategories();
   renderShopGrid();
+
+  // Live countdown ticker - updates every second
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    // Update timer text in shop grid
+    document.querySelectorAll('[data-item-id]').forEach(el => {
+      const itemId = el.dataset.itemId;
+      const item = SHOP_ITEMS.find(i => i.id === itemId);
+      const entry = ownedItems.find(o => o.id === itemId);
+      if (!item || !entry) return;
+      const msLeft = getCooldownRemaining(entry, item);
+      if (msLeft <= 0) {
+        // Timer expired — re-enable the buy button by re-rendering
+        renderShopGrid();
+        renderOwnedItems();
+        clearInterval(timerInterval);
+        timerInterval = setInterval(arguments.callee, 1000); // restart after re-render
+        return;
+      }
+      el.textContent = '⏱ ' + formatCountdown(msLeft) + ' remaining';
+      // Update progress bar
+      const bar = el.closest('.timer-bar-wrap')?.querySelector('.timer-bar-fill');
+      if (bar && item.cooldownHrs) {
+        const pct = Math.round((1 - msLeft/(item.cooldownHrs*3600000))*100);
+        bar.style.width = pct + '%';
+      }
+    });
+  }, 1000);
 }
 
 init();
