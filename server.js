@@ -31,6 +31,7 @@ app.get('/history', (req, res) => res.sendFile(path.join(__dirname, 'public', 'h
 app.get('/business', (req, res) => res.sendFile(path.join(__dirname, 'public', 'business.html')));
 app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'public', 'profile.html')));
 app.get('/shop', (req, res) => res.sendFile(path.join(__dirname, 'public', 'shop.html')));
+app.get('/crypto', (req, res) => res.sendFile(path.join(__dirname, 'public', 'crypto.html')));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

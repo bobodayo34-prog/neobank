@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crypto — NeoBank</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* ── Crypto-specific styles ── */
+    .crypto-hero {
+      background: linear-gradient(135deg, #0a1628 0%, #0d1f12 50%, #1a0d28 100%);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+      position: relative; overflow: hidden;
+    }
+    .crypto-hero::before {
+      content: '₿';
+      position: absolute; right: 24px; top: 50%; transform: translateY(-50%);
+      font-size: 100px; opacity: 0.04; pointer-events: none;
+    }
+    .portfolio-val { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; color: var(--text); }
+    .portfolio-pnl { font-size: 14px; font-weight: 600; margin-top: 4px; }
+    .pnl-up { color: #22c55e; }
+    .pnl-down { color: var(--red); }
+
+    /* Tabs */
+    .crypto-tabs { display: flex; gap: 4px; background: var(--bg2); border-radius: 12px; padding: 4px; margin-bottom: 24px; }
+    .crypto-tab { flex: 1; padding: 10px; border: none; background: none; color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; border-radius: 9px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .crypto-tab.active { background: var(--surface2); color: var(--text); font-weight: 700; }
+
+    /* Market grid */
+    .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .coin-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .coin-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 24px rgba(0,212,168,0.08); }
+    .coin-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .coin-left { display: flex; align-items: center; gap: 10px; }
+    .coin-icon { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .coin-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; }
+    .coin-symbol { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+    .coin-rank { font-size: 10px; color: var(--text3); background: var(--surface2); padding: 2px 7px; border-radius: 100px; }
+    .coin-price { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+    .coin-change { font-size: 13px; font-weight: 600; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 3px; }
+    .change-up { background: rgba(34,197,94,0.12); color: #22c55e; }
+    .change-down { background: rgba(255,71,87,0.12); color: var(--red); }
+    .coin-mcap { font-size: 11px; color: var(--text3); margin-top: 8px; }
+    .mini-chart { height: 40px; margin: 10px 0; }
+    .buy-crypto-btn { width: 100%; padding: 10px; border-radius: 8px; border: none; background: var(--accent); color: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+    .buy-crypto-btn:hover { background: var(--accent2); }
+
+    /* Portfolio */
+    .portfolio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+    .portfolio-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .pi-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .pi-info { display: flex; align-items: center; gap: 10px; }
+    .pi-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+    .pi-pnl { font-size: 12px; font-weight: 600; margin-top: 2px; }
+    .pi-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .pi-stat { background: var(--surface2); border-radius: 8px; padding: 8px 12px; }
+    .pi-stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+    .pi-stat-val { font-weight: 700; font-size: 13px; }
+    .sell-crypto-btn { width: 100%; padding: 9px; border-radius: 8px; border: 1px solid var(--red); background: transparent; color: var(--red); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .sell-crypto-btn:hover { background: rgba(255,71,87,0.1); }
+
+    /* Trade modal */
+    .modal-coin-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .modal-coin-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+    .modal-coin-name { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; }
+    .modal-coin-price { font-size: 13px; color: var(--text2); }
+    .amount-input-wrap { position: relative; margin-bottom: 16px; }
+    .amount-input-wrap input { padding-right: 70px !important; font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
+    .amount-currency { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text3); font-weight: 600; }
+    .quick-amounts { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .quick-amt { padding: 6px 12px; border-radius: 100px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .quick-amt:hover { border-color: var(--accent); color: var(--accent); }
+    .trade-summary { background: var(--surface2); border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+    .trade-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; }
+    .trade-row .lbl { color: var(--text2); }
+    .trade-row .val { font-weight: 600; }
+    .trade-confirm-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; background: var(--accent); color: var(--bg); font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; cursor: pointer; transition: all 0.2s; }
+    .trade-confirm-btn:hover { background: var(--accent2); }
+    .trade-confirm-btn:disabled { background: var(--surface2); color: var(--text3); cursor: not-allowed; }
+    .trade-confirm-btn.sell { background: var(--red); color: #fff; }
+    .trade-confirm-btn.sell:hover { background: #cc3344; }
+
+    /* Sparkline SVG */
+    .sparkline { width: 100%; height: 40px; }
+
+    /* Stats bar */
+    .market-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .mstat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+    .mstat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .mstat-val { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; }
+
+    /* Filter bar */
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+    .filter-btn { padding: 7px 14px; border-radius: 100px; border: 1px solid var(--border); background: var(--surface); color: var(--text2); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .filter-btn.active, .filter-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+    .search-input { flex: 1; min-width: 180px; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; }
+    .search-input:focus { border-color: var(--accent); }
+
+    /* Trending badge */
+    .trending-badge { position: absolute; top: 12px; right: 12px; background: rgba(245,200,66,0.15); border: 1px solid var(--gold); color: var(--gold); font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 100px; }
+
+    /* Empty state */
+    .empty-portfolio { text-align: center; padding: 60px 20px; }
+    .empty-portfolio .empty-icon { font-size: 56px; margin-bottom: 16px; }
+    .empty-portfolio h3 { font-family: 'Syne', sans-serif; font-size: 20px; margin-bottom: 8px; }
+    .empty-portfolio p { color: var(--text2); font-size: 14px; }
+
+    .price-up { color: #22c55e; }
+    .price-down { color: var(--red); }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.3s ease; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main fade-in">
+    <div class="page-header">
+      <h1 class="page-title">₿ Crypto Market</h1>
+      <div class="page-sub">Buy and sell cryptocurrencies with your NeoBank balance</div>
+    </div>
+
+    <!-- Portfolio hero -->
+    <div class="crypto-hero">
+      <div>
+        <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">My Crypto Portfolio</div>
+        <div class="portfolio-val" id="portfolio-val">₦0.00</div>
+        <div class="portfolio-pnl" id="portfolio-pnl"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:4px">Available Balance</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--accent)" id="crypto-balance">₦0.00</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">Bank balance</div>
+      </div>
+    </div>
+
+    <!-- Market stats -->
+    <div class="market-stats" id="market-stats">
+      <div class="mstat"><div class="mstat-label">Total Coins</div><div class="mstat-val" id="stat-coins">50</div></div>
+      <div class="mstat"><div class="mstat-label">Holdings</div><div class="mstat-val" id="stat-holdings">0</div></div>
+      <div class="mstat"><div class="mstat-label">Best Performer</div><div class="mstat-val price-up" id="stat-best">—</div></div>
+      <div class="mstat"><div class="mstat-label">Worst Performer</div><div class="mstat-val price-down" id="stat-worst">—</div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="crypto-tabs">
+      <button class="crypto-tab active" onclick="showCryptoTab('market')" id="tab-market-btn">📈 Market</button>
+      <button class="crypto-tab" onclick="showCryptoTab('portfolio')" id="tab-portfolio-btn">💼 My Portfolio</button>
+    </div>
+
+    <!-- Market tab -->
+    <div id="tab-market">
+      <div class="filter-bar">
+        <input type="text" class="search-input" placeholder="🔍 Search coins..." id="coin-search" oninput="filterCoins()">
+        <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+        <button class="filter-btn" onclick="setFilter('top10', this)">Top 10</button>
+        <button class="filter-btn" onclick="setFilter('trending', this)">🔥 Trending</button>
+        <button class="filter-btn" onclick="setFilter('gainers', this)">📈 Gainers</button>
+        <button class="filter-btn" onclick="setFilter('losers', this)">📉 Losers</button>
+        <button class="filter-btn" onclick="setFilter('meme', this)">🐸 Meme</button>
+        <button class="filter-btn" onclick="setFilter('defi', this)">⚡ DeFi</button>
+      </div>
+      <div class="market-grid" id="market-grid"></div>
+    </div>
+
+    <!-- Portfolio tab -->
+    <div id="tab-portfolio" style="display:none">
+      <div id="portfolio-grid"></div>
+    </div>
+  </main>
+</div>
+
+<!-- Buy modal -->
+<div class="modal-overlay" id="buy-crypto-modal">
+  <div class="modal">
+    <div class="modal-title">Buy Crypto</div>
+    <div class="modal-coin-header">
+      <div class="modal-coin-icon" id="buy-modal-icon"></div>
+      <div>
+        <div class="modal-coin-name" id="buy-modal-name"></div>
+        <div class="modal-coin-price">Current price: <span id="buy-modal-curr-price" style="color:var(--accent);font-weight:700"></span></div>
+      </div>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:8px">Amount to invest (₦):</div>
+    <div class="amount-input-wrap">
+      <input type="number" class="form-control" id="buy-amount" placeholder="0" min="1000" oninput="updateBuyPreview()">
+      <span class="amount-currency">NGN</span>
+    </div>
+    <div class="quick-amounts">
+      <button class="quick-amt" onclick="setQuickAmt(5000)">₦5K</button>
+      <button class="quick-amt" onclick="setQuickAmt(10000)">₦10K</button>
+      <button class="quick-amt" onclick="setQuickAmt(50000)">₦50K</button>
+      <button class="quick-amt" onclick="setQuickAmt(100000)">₦100K</button>
+      <button class="quick-amt" onclick="setQuickAmt(500000)">₦500K</button>
+      <button class="quick-amt" onclick="setQuickAmtAll()">All In 🔥</button>
+    </div>
+    <div class="trade-summary">
+      <div class="trade-row"><span class="lbl">You invest</span><span class="val" id="buy-sum-invest">₦0</span></div>
+      <div class="trade-row"><span class="lbl">You receive</span><span class="val" id="buy-sum-coins" style="color:var(--accent)">0 coins</span></div>
+      <div class="trade-row"><span class="lbl">Price per coin</span><span class="val" id="buy-sum-price">₦0</span></div>
+      <div class="trade-row" style="border-top:1px solid var(--border);margin-top:6px;padding-top:10px"><span class="lbl">Balance after</span><span class="val" id="buy-sum-after">₦0</span></div>
+    </div>
+    <div id="buy-crypto-alert" class="alert"></div>
+    <div style="display:flex;gap:12px;margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeBuyCryptoModal()">Cancel</button>
+      <button class="trade-confirm-btn" id="confirm-buy-crypto-btn" onclick="confirmBuyCrypto()" disabled>Buy Now 🚀</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sell modal -->
+<div class="modal-overlay" id="sell-crypto-modal">
+  <div class="modal">
+    <div class="modal-title">Sell Crypto</div>
+    <div class="modal-coin-header">
+      <div class="modal-coin-icon" id="sell-modal-icon"></div>
+      <div>
+        <div class="modal-coin-name" id="sell-modal-coin-name"></div>
+        <div class="modal-coin-price">Current price: <span id="sell-modal-curr-price" style="color:var(--accent);font-weight:700"></span></div>
+      </div>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:8px">Amount to sell (coins):</div>
+    <div class="amount-input-wrap">
+      <input type="number" class="form-control" id="sell-amount" placeholder="0" min="0" step="any" oninput="updateSellPreview()">
+      <span class="amount-currency" id="sell-currency-label">COIN</span>
+    </div>
+    <div class="quick-amounts" id="sell-quick-btns">
+      <button class="quick-amt" onclick="setSellPct(25)">25%</button>
+      <button class="quick-amt" onclick="setSellPct(50)">50%</button>
+      <button class="quick-amt" onclick="setSellPct(75)">75%</button>
+      <button class="quick-amt" onclick="setSellPct(100)">All 💯</button>
+    </div>
+    <div class="trade-summary">
+      <div class="trade-row"><span class="lbl">Coins selling</span><span class="val" id="sell-sum-coins">0</span></div>
+      <div class="trade-row"><span class="lbl">You receive (₦)</span><span class="val price-up" id="sell-sum-receive">₦0</span></div>
+      <div class="trade-row"><span class="lbl">Avg buy price</span><span class="val" id="sell-sum-avg">₦0</span></div>
+      <div class="trade-row"><span class="lbl">P&L</span><span class="val" id="sell-sum-pnl">₦0</span></div>
+      <div class="trade-row" style="border-top:1px solid var(--border);margin-top:6px;padding-top:10px"><span class="lbl">Balance after</span><span class="val" id="sell-sum-after" style="color:var(--accent);font-weight:700">₦0</span></div>
+    </div>
+    <div id="sell-crypto-alert" class="alert"></div>
+    <div style="display:flex;gap:12px;margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeSellCryptoModal()">Cancel</button>
+      <button class="trade-confirm-btn sell" id="confirm-sell-crypto-btn" onclick="confirmSellCrypto()" disabled>Sell Now 💸</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/js/sidebar.js"></script>
+<script>
+if (!auth.requireAuth()) throw new Error();
+injectSidebar();
+buildSidebar('/crypto');
+startUsagePing();
+
+// ═══════════════════════════════════════════════
+//  COIN DATA — 50 coins with realistic prices (in NGN)
+// ═══════════════════════════════════════════════
+const COINS = [
+  // Top 10
+  { id:'btc', name:'Bitcoin', symbol:'BTC', icon:'₿', bg:'#f7931a', price:97500000, change24h:2.4, mcap:'₦180T', rank:1, tags:['top10'] },
+  { id:'eth', name:'Ethereum', symbol:'ETH', icon:'Ξ', bg:'#627eea', price:5200000, change24h:-1.2, mcap:'₦62T', rank:2, tags:['top10','defi'] },
+  { id:'bnb', name:'BNB', symbol:'BNB', icon:'◈', bg:'#f3ba2f', price:950000, change24h:0.8, mcap:'₦13T', rank:3, tags:['top10','defi'] },
+  { id:'sol', name:'Solana', symbol:'SOL', icon:'◎', bg:'#9945ff', price:240000, change24h:5.6, mcap:'₦11T', rank:4, tags:['top10','trending'] },
+  { id:'xrp', name:'XRP', symbol:'XRP', icon:'✕', bg:'#00aae4', price:4800, change24h:1.1, mcap:'₦9T', rank:5, tags:['top10'] },
+  { id:'ada', name:'Cardano', symbol:'ADA', icon:'₳', bg:'#0d1e2c', price:780, change24h:-0.5, mcap:'₦2.7T', rank:6, tags:['top10'] },
+  { id:'avax', name:'Avalanche', symbol:'AVAX', icon:'▲', bg:'#e84142', price:60000, change24h:3.2, mcap:'₦2.4T', rank:7, tags:['top10','defi'] },
+  { id:'dot', name:'Polkadot', symbol:'DOT', icon:'●', bg:'#e6007a', price:12000, change24h:-2.1, mcap:'₦1.7T', rank:8, tags:['top10'] },
+  { id:'matic', name:'Polygon', symbol:'MATIC', icon:'⬡', bg:'#8247e5', price:1200, change24h:4.8, mcap:'₦1.4T', rank:9, tags:['top10','defi'] },
+  { id:'link', name:'Chainlink', symbol:'LINK', icon:'⬡', bg:'#375bd2', price:23000, change24h:6.3, mcap:'₦1.3T', rank:10, tags:['top10','defi','trending'] },
+  // DeFi
+  { id:'uni', name:'Uniswap', symbol:'UNI', icon:'🦄', bg:'#ff007a', price:18000, change24h:2.9, mcap:'₦1.1T', rank:11, tags:['defi'] },
+  { id:'aave', name:'Aave', symbol:'AAVE', icon:'👻', bg:'#b6509e', price:250000, change24h:-0.8, mcap:'₦370B', rank:12, tags:['defi'] },
+  { id:'crv', name:'Curve', symbol:'CRV', icon:'⟳', bg:'#3a3a3a', price:1600, change24h:1.4, mcap:'₦210B', rank:13, tags:['defi'] },
+  { id:'mkr', name:'Maker', symbol:'MKR', icon:'⬙', bg:'#1aab9b', price:3200000, change24h:-1.9, mcap:'₦290B', rank:14, tags:['defi'] },
+  { id:'comp', name:'Compound', symbol:'COMP', icon:'⊕', bg:'#00d395', price:85000, change24h:0.3, mcap:'₦560B', rank:15, tags:['defi'] },
+  { id:'snx', name:'Synthetix', symbol:'SNX', icon:'∮', bg:'#1e1a3a', price:5500, change24h:3.7, mcap:'₦185B', rank:16, tags:['defi'] },
+  { id:'1inch', name:'1inch', symbol:'1INCH', icon:'1⃣', bg:'#d82122', price:2400, change24h:7.2, mcap:'₦230B', rank:17, tags:['defi','gainers'] },
+  // Meme coins
+  { id:'doge', name:'Dogecoin', symbol:'DOGE', icon:'Ð', bg:'#c3a634', price:580, change24h:12.4, mcap:'₦850B', rank:18, tags:['meme','trending','gainers'] },
+  { id:'shib', name:'Shiba Inu', symbol:'SHIB', icon:'🐕', bg:'#ff4500', price:0.38, change24h:18.7, mcap:'₦220B', rank:19, tags:['meme','trending','gainers'] },
+  { id:'pepe', name:'Pepe', symbol:'PEPE', icon:'🐸', bg:'#2ecc40', price:0.025, change24h:24.5, mcap:'₦105B', rank:20, tags:['meme','trending','gainers'] },
+  { id:'floki', name:'Floki Inu', symbol:'FLOKI', icon:'⚡', bg:'#f5a623', price:0.28, change24h:15.3, mcap:'₦28B', rank:21, tags:['meme','trending'] },
+  { id:'wif', name:'dogwifhat', symbol:'WIF', icon:'🎩', bg:'#9b59b6', price:8500, change24h:9.8, mcap:'₦88B', rank:22, tags:['meme','gainers'] },
+  { id:'bonk', name:'Bonk', symbol:'BONK', icon:'🔨', bg:'#ff8c00', price:0.035, change24h:-5.2, mcap:'₦22B', rank:23, tags:['meme','losers'] },
+  { id:'brett', name:'Brett', symbol:'BRETT', icon:'😎', bg:'#3498db', price:1200, change24h:31.2, mcap:'₦18B', rank:24, tags:['meme','gainers','trending'] },
+  // Layer 1s
+  { id:'atom', name:'Cosmos', symbol:'ATOM', icon:'⚛', bg:'#2e3148', price:14000, change24h:-3.4, mcap:'₦540B', rank:25, tags:[] },
+  { id:'near', name:'NEAR Protocol', symbol:'NEAR', icon:'◉', bg:'#000000', price:19000, change24h:8.1, mcap:'₦200B', rank:26, tags:['trending'] },
+  { id:'ftm', name:'Fantom', symbol:'FTM', icon:'F', bg:'#1969ff', price:2800, change24h:5.9, mcap:'₦98B', rank:27, tags:[] },
+  { id:'algo', name:'Algorand', symbol:'ALGO', icon:'Α', bg:'#000000', price:580, change24h:-1.8, mcap:'₦430B', rank:28, tags:[] },
+  { id:'icp', name:'Internet Computer', symbol:'ICP', icon:'∞', bg:'#29abe2', price:18500, change24h:2.2, mcap:'₦850B', rank:29, tags:[] },
+  { id:'ton', name:'Toncoin', symbol:'TON', icon:'💎', bg:'#0098ea', price:36000, change24h:4.5, mcap:'₦500B', rank:30, tags:['trending'] },
+  // Layer 2s
+  { id:'arb', name:'Arbitrum', symbol:'ARB', icon:'🅰', bg:'#28a0f0', price:2800, change24h:-0.9, mcap:'₦360B', rank:31, tags:['defi'] },
+  { id:'op', name:'Optimism', symbol:'OP', icon:'🔴', bg:'#ff0420', price:4200, change24h:1.6, mcap:'₦175B', rank:32, tags:['defi'] },
+  { id:'zk', name:'ZKsync', symbol:'ZK', icon:'⚡', bg:'#8b5cf6', price:700, change24h:-4.1, mcap:'₦280B', rank:33, tags:['defi','losers'] },
+  { id:'blast', name:'Blast', symbol:'BLAST', icon:'💥', bg:'#fcfc03', price:680, change24h:3.3, mcap:'₦60B', rank:34, tags:[] },
+  // Stablecoins (price in NGN)
+  { id:'usdt', name:'Tether', symbol:'USDT', icon:'₮', bg:'#26a17b', price:1600, change24h:0.1, mcap:'₦170T', rank:35, tags:[] },
+  { id:'usdc', name:'USD Coin', symbol:'USDC', icon:'$', bg:'#2775ca', price:1600, change24h:0.0, mcap:'₦50T', rank:36, tags:[] },
+  // Others
+  { id:'xmr', name:'Monero', symbol:'XMR', icon:'ɱ', bg:'#ff6600', price:290000, change24h:-2.6, mcap:'₦530B', rank:37, tags:[] },
+  { id:'xlm', name:'Stellar', symbol:'XLM', icon:'✦', bg:'#0c0c0c', price:480, change24h:1.9, mcap:'₦580B', rank:38, tags:[] },
+  { id:'vet', name:'VeChain', symbol:'VET', icon:'V', bg:'#15bdff', price:75, change24h:2.8, mcap:'₦210B', rank:39, tags:[] },
+  { id:'hbar', name:'Hedera', symbol:'HBAR', icon:'ℏ', bg:'#000000', price:320, change24h:-1.1, mcap:'₦120B', rank:40, tags:[] },
+  { id:'theta', name:'Theta Network', symbol:'THETA', icon:'θ', bg:'#2ab8e6', price:3200, change24h:6.4, mcap:'₦325B', rank:41, tags:['gainers'] },
+  { id:'fil', name:'Filecoin', symbol:'FIL', icon:'F', bg:'#0090ff', price:14500, change24h:-3.7, mcap:'₦640B', rank:42, tags:['losers'] },
+  { id:'egld', name:'MultiversX', symbol:'EGLD', icon:'X', bg:'#23f7dd', price:125000, change24h:4.1, mcap:'₦330B', rank:43, tags:[] },
+  { id:'grt', name:'The Graph', symbol:'GRT', icon:'◈', bg:'#6f4cff', price:380, change24h:11.2, mcap:'₦360B', rank:44, tags:['defi','gainers'] },
+  { id:'sand', name:'The Sandbox', symbol:'SAND', icon:'🏖️', bg:'#00adef', price:800, change24h:-6.3, mcap:'₦195B', rank:45, tags:['losers'] },
+  { id:'mana', name:'Decentraland', symbol:'MANA', icon:'🌐', bg:'#ff2d55', price:720, change24h:-4.8, mcap:'₦145B', rank:46, tags:['losers'] },
+  { id:'apt', name:'Aptos', symbol:'APT', icon:'A', bg:'#2ad6c0', price:19000, change24h:7.5, mcap:'₦450B', rank:47, tags:['gainers'] },
+  { id:'sui', name:'Sui', symbol:'SUI', icon:'💧', bg:'#4da2ff', price:7200, change24h:9.3, mcap:'₦210B', rank:48, tags:['trending','gainers'] },
+  { id:'sei', name:'Sei', symbol:'SEI', icon:'🌊', bg:'#9d4edd', price:2200, change24h:-2.5, mcap:'₦180B', rank:49, tags:[] },
+  { id:'pyth', name:'Pyth Network', symbol:'PYTH', icon:'🐍', bg:'#6e3eff', price:1200, change24h:13.8, mcap:'₦150B', rank:50, tags:['defi','gainers','trending'] },
+];
+
+// Price simulation: prices fluctuate every 30s
+let liveCoins = COINS.map(c => ({ ...c, livePrice: c.price }));
+
+function simulatePrices() {
+  liveCoins = liveCoins.map(c => {
+    const volatility = c.tags.includes('meme') ? 0.04 : 0.012;
+    const drift = (Math.random() - 0.48) * volatility;
+    const newPrice = Math.max(0.001, c.livePrice * (1 + drift));
+    const newChange = c.change24h + (Math.random() - 0.5) * 0.5;
+    return { ...c, livePrice: newPrice, change24h: parseFloat(newChange.toFixed(2)) };
+  });
+  renderMarketGrid();
+  updatePortfolioValue();
+}
+
+// Generate sparkline path
+function generateSparkline(change24h, up) {
+  const pts = [];
+  let y = 20;
+  for (let i = 0; i < 20; i++) {
+    y += (Math.random() - (up ? 0.45 : 0.55)) * 5;
+    y = Math.max(5, Math.min(35, y));
+    pts.push(`${i * 5.26},${y}`);
+  }
+  const color = up ? '#22c55e' : '#ff4757';
+  const polyPoints = pts.join(' ');
+  const fillPts = `0,40 ${pts[0]} ${polyPoints} ${(19*5.26)},40`;
+  return `<svg class="sparkline" viewBox="0 0 100 40" preserveAspectRatio="none">
+    <defs><linearGradient id="sg_${Math.random().toString(36).slice(2)}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${color}" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <polygon points="${fillPts}" fill="url(#sg_0)" />
+    <polyline points="${polyPoints}" fill="none" stroke="${color}" stroke-width="1.5"/>
+  </svg>`;
+}
+
+// ═══════════════ PORTFOLIO DATA ═══════════════
+const STORAGE_KEY = 'neo_crypto_' + (auth.user()?.accountNumber || 'x');
+let cryptoPortfolio = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+// { [coinId]: { qty, avgBuyPrice, totalInvested } }
+
+function savePortfolio() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(cryptoPortfolio));
+}
+
+// ═══════════════ STATE ═══════════════
+let myBalance = 0;
+let activeCoinFilter = 'all';
+let coinSearchQuery = '';
+let buyingCoin = null;
+let sellingCoin = null;
+
+// ═══════════════ FILTERS ═══════════════
+function setFilter(f, btn) {
+  activeCoinFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMarketGrid();
+}
+
+function filterCoins() {
+  coinSearchQuery = document.getElementById('coin-search').value.toLowerCase();
+  renderMarketGrid();
+}
+
+function getFilteredCoins() {
+  return liveCoins.filter(c => {
+    const matchSearch = !coinSearchQuery || c.name.toLowerCase().includes(coinSearchQuery) || c.symbol.toLowerCase().includes(coinSearchQuery);
+    let matchFilter = true;
+    if (activeCoinFilter === 'top10') matchFilter = c.tags.includes('top10');
+    else if (activeCoinFilter === 'trending') matchFilter = c.tags.includes('trending');
+    else if (activeCoinFilter === 'gainers') matchFilter = c.change24h > 5;
+    else if (activeCoinFilter === 'losers') matchFilter = c.change24h < -2;
+    else if (activeCoinFilter === 'meme') matchFilter = c.tags.includes('meme');
+    else if (activeCoinFilter === 'defi') matchFilter = c.tags.includes('defi');
+    return matchSearch && matchFilter;
+  });
+}
+
+// ═══════════════ RENDER MARKET ═══════════════
+function renderMarketGrid() {
+  const coins = getFilteredCoins();
+  const grid = document.getElementById('market-grid');
+  if (!coins.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">No coins found</div></div>';
+    return;
+  }
+  grid.innerHTML = coins.map(coin => {
+    const up = coin.change24h >= 0;
+    const held = cryptoPortfolio[coin.id];
+    const heldVal = held ? formatMoney(held.qty * coin.livePrice) : null;
+    return `
+      <div class="coin-card">
+        ${coin.tags.includes('trending') ? '<div class="trending-badge">🔥 Trending</div>' : ''}
+        <div class="coin-top">
+          <div class="coin-left">
+            <div class="coin-icon" style="background:${coin.bg}20;border:1px solid ${coin.bg}40;color:${coin.bg}">${coin.icon}</div>
+            <div>
+              <div class="coin-name">${coin.name}</div>
+              <div class="coin-symbol">${coin.symbol}</div>
+            </div>
+          </div>
+          <div class="coin-rank">#${coin.rank}</div>
+        </div>
+        ${generateSparkline(coin.change24h, up)}
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:4px">
+          <div class="coin-price ${up ? 'price-up' : 'price-down'}">${formatMoney(coin.livePrice)}</div>
+          <div class="coin-change ${up ? 'change-up' : 'change-down'}">${up ? '▲' : '▼'} ${Math.abs(coin.change24h)}%</div>
+        </div>
+        <div class="coin-mcap">Mkt Cap: ${coin.mcap}</div>
+        ${held ? `<div style="font-size:11px;color:var(--accent);margin-top:4px;font-weight:600">📦 Holding: ${held.qty.toFixed(6)} ${coin.symbol} ≈ ${heldVal}</div>` : ''}
+        <button class="buy-crypto-btn" onclick="openBuyCrypto('${coin.id}')">Buy ${coin.symbol}</button>
+      </div>
+    `;
+  }).join('');
+}
+
+// ═══════════════ RENDER PORTFOLIO ═══════════════
+function updatePortfolioValue() {
+  let total = 0;
+  let totalInvested = 0;
+  Object.entries(cryptoPortfolio).forEach(([id, p]) => {
+    const coin = liveCoins.find(c => c.id === id);
+    if (coin) {
+      total += p.qty * coin.livePrice;
+      totalInvested += p.totalInvested;
+    }
+  });
+  document.getElementById('portfolio-val').textContent = formatMoney(total);
+  const pnl = total - totalInvested;
+  const pnlPct = totalInvested > 0 ? ((pnl / totalInvested) * 100).toFixed(2) : 0;
+  const pnlEl = document.getElementById('portfolio-pnl');
+  if (totalInvested > 0) {
+    pnlEl.className = 'portfolio-pnl ' + (pnl >= 0 ? 'pnl-up' : 'pnl-down');
+    pnlEl.textContent = (pnl >= 0 ? '▲ +' : '▼ ') + formatMoney(Math.abs(pnl)) + ' (' + (pnl >= 0 ? '+' : '') + pnlPct + '% all time)';
+  } else {
+    pnlEl.textContent = 'No investments yet';
+    pnlEl.className = 'portfolio-pnl';
+    pnlEl.style.color = 'var(--text3)';
+  }
+  document.getElementById('stat-holdings').textContent = Object.keys(cryptoPortfolio).length;
+  // Best/worst
+  const changes = liveCoins.filter(c => cryptoPortfolio[c.id]);
+  if (changes.length) {
+    const best = changes.reduce((a,b) => b.change24h > a.change24h ? b : a);
+    const worst = changes.reduce((a,b) => b.change24h < a.change24h ? b : a);
+    document.getElementById('stat-best').textContent = best.symbol + ' ' + (best.change24h > 0 ? '+' : '') + best.change24h + '%';
+    document.getElementById('stat-worst').textContent = worst.symbol + ' ' + (worst.change24h > 0 ? '+' : '') + worst.change24h + '%';
+  }
+}
+
+function renderPortfolio() {
+  const grid = document.getElementById('portfolio-grid');
+  const holdings = Object.entries(cryptoPortfolio).filter(([,p]) => p.qty > 0);
+  if (!holdings.length) {
+    grid.innerHTML = `<div class="empty-portfolio"><div class="empty-icon">💼</div><h3>No crypto yet</h3><p>Go to the Market tab and buy your first coin!</p></div>`;
+    return;
+  }
+  grid.innerHTML = '<div class="portfolio-grid">' + holdings.map(([id, p]) => {
+    const coin = liveCoins.find(c => c.id === id);
+    if (!coin) return '';
+    const currentVal = p.qty * coin.livePrice;
+    const pnl = currentVal - p.totalInvested;
+    const pnlPct = ((pnl / p.totalInvested) * 100).toFixed(2);
+    const up = pnl >= 0;
+    return `
+      <div class="portfolio-item">
+        <div class="pi-top">
+          <div class="pi-info">
+            <div class="coin-icon" style="background:${coin.bg}20;border:1px solid ${coin.bg}40;color:${coin.bg};width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px">${coin.icon}</div>
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700">${coin.name}</div>
+              <div style="font-size:11px;color:var(--text3)">${p.qty.toFixed(6)} ${coin.symbol}</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div class="pi-val">${formatMoney(currentVal)}</div>
+            <div class="pi-pnl ${up ? 'pnl-up' : 'pnl-down'}">${up ? '▲ +' : '▼ '}${formatMoney(Math.abs(pnl))} (${up ? '+' : ''}${pnlPct}%)</div>
+          </div>
+        </div>
+        <div class="pi-stats">
+          <div class="pi-stat"><div class="pi-stat-label">Avg Buy Price</div><div class="pi-stat-val">${formatMoney(p.avgBuyPrice)}</div></div>
+          <div class="pi-stat"><div class="pi-stat-label">Current Price</div><div class="pi-stat-val ${coin.change24h >= 0 ? 'price-up' : 'price-down'}">${formatMoney(coin.livePrice)}</div></div>
+          <div class="pi-stat"><div class="pi-stat-label">Total Invested</div><div class="pi-stat-val">${formatMoney(p.totalInvested)}</div></div>
+          <div class="pi-stat"><div class="pi-stat-label">24h Change</div><div class="pi-stat-val ${coin.change24h >= 0 ? 'price-up' : 'price-down'}">${coin.change24h >= 0 ? '+' : ''}${coin.change24h}%</div></div>
+        </div>
+        <button class="sell-crypto-btn" onclick="openSellCrypto('${coin.id}')">💸 Sell ${coin.symbol}</button>
+      </div>
+    `;
+  }).join('') + '</div>';
+}
+
+// ═══════════════ BUY MODAL ═══════════════
+function openBuyCrypto(coinId) {
+  buyingCoin = liveCoins.find(c => c.id === coinId);
+  if (!buyingCoin) return;
+  document.getElementById('buy-modal-icon').textContent = buyingCoin.icon;
+  document.getElementById('buy-modal-icon').style.cssText = `background:${buyingCoin.bg}20;border:1px solid ${buyingCoin.bg}40;color:${buyingCoin.bg}`;
+  document.getElementById('buy-modal-name').textContent = buyingCoin.name + ' (' + buyingCoin.symbol + ')';
+  document.getElementById('buy-modal-curr-price').textContent = formatMoney(buyingCoin.livePrice);
+  document.getElementById('buy-amount').value = '';
+  document.getElementById('confirm-buy-crypto-btn').disabled = true;
+  document.getElementById('buy-crypto-alert').className = 'alert';
+  updateBuyPreview();
+  document.getElementById('buy-crypto-modal').classList.add('open');
+}
+
+function closeBuyCryptoModal() {
+  document.getElementById('buy-crypto-modal').classList.remove('open');
+  // Reset button
+  const btn = document.getElementById('confirm-buy-crypto-btn');
+  btn.disabled = true;
+  btn.innerHTML = 'Buy Now 🚀';
+  buyingCoin = null;
+}
+
+function setQuickAmt(n) {
+  document.getElementById('buy-amount').value = n;
+  updateBuyPreview();
+}
+
+function setQuickAmtAll() {
+  document.getElementById('buy-amount').value = Math.floor(myBalance);
+  updateBuyPreview();
+}
+
+function updateBuyPreview() {
+  if (!buyingCoin) return;
+  const amt = parseFloat(document.getElementById('buy-amount').value) || 0;
+  const coins = amt > 0 ? (amt / buyingCoin.livePrice) : 0;
+  document.getElementById('buy-sum-invest').textContent = formatMoney(amt);
+  document.getElementById('buy-sum-coins').textContent = coins.toFixed(6) + ' ' + buyingCoin.symbol;
+  document.getElementById('buy-sum-price').textContent = formatMoney(buyingCoin.livePrice);
+  document.getElementById('buy-sum-after').textContent = formatMoney(myBalance - amt);
+  document.getElementById('buy-sum-after').style.color = (myBalance - amt) < 0 ? 'var(--red)' : 'var(--accent)';
+  document.getElementById('confirm-buy-crypto-btn').disabled = amt < 100 || amt > myBalance;
+}
+
+// ═══════════════ SELL MODAL ═══════════════
+function openSellCrypto(coinId) {
+  sellingCoin = liveCoins.find(c => c.id === coinId);
+  const holding = cryptoPortfolio[coinId];
+  if (!sellingCoin || !holding) return;
+  document.getElementById('sell-modal-icon').textContent = sellingCoin.icon;
+  document.getElementById('sell-modal-icon').style.cssText = `background:${sellingCoin.bg}20;border:1px solid ${sellingCoin.bg}40;color:${sellingCoin.bg}`;
+  document.getElementById('sell-modal-coin-name').textContent = sellingCoin.name + ' (' + sellingCoin.symbol + ')';
+  document.getElementById('sell-modal-curr-price').textContent = formatMoney(sellingCoin.livePrice);
+  document.getElementById('sell-currency-label').textContent = sellingCoin.symbol;
+  document.getElementById('sell-amount').value = '';
+  document.getElementById('confirm-sell-crypto-btn').disabled = true;
+  document.getElementById('sell-crypto-alert').className = 'alert';
+  updateSellPreview();
+  document.getElementById('sell-crypto-modal').classList.add('open');
+}
+
+function closeSellCryptoModal() {
+  document.getElementById('sell-crypto-modal').classList.remove('open');
+  const btn = document.getElementById('confirm-sell-crypto-btn');
+  btn.disabled = true;
+  btn.innerHTML = 'Sell Now 💸';
+  sellingCoin = null;
+}
+
+function setSellPct(pct) {
+  if (!sellingCoin) return;
+  const holding = cryptoPortfolio[sellingCoin.id];
+  if (!holding) return;
+  const amt = (holding.qty * pct / 100);
+  document.getElementById('sell-amount').value = amt.toFixed(6);
+  updateSellPreview();
+}
+
+function updateSellPreview() {
+  if (!sellingCoin) return;
+  const holding = cryptoPortfolio[sellingCoin.id];
+  if (!holding) return;
+  const qty = parseFloat(document.getElementById('sell-amount').value) || 0;
+  const receive = qty * sellingCoin.livePrice;
+  const costBasis = qty * holding.avgBuyPrice;
+  const pnl = receive - costBasis;
+  document.getElementById('sell-sum-coins').textContent = qty.toFixed(6) + ' ' + sellingCoin.symbol;
+  document.getElementById('sell-sum-receive').textContent = formatMoney(receive);
+  document.getElementById('sell-sum-avg').textContent = formatMoney(holding.avgBuyPrice);
+  const pnlEl = document.getElementById('sell-sum-pnl');
+  pnlEl.textContent = (pnl >= 0 ? '+' : '') + formatMoney(pnl);
+  pnlEl.className = 'val ' + (pnl >= 0 ? 'price-up' : 'price-down');
+  document.getElementById('sell-sum-after').textContent = formatMoney(myBalance + receive);
+  document.getElementById('confirm-sell-crypto-btn').disabled = qty <= 0 || qty > holding.qty;
+}
+
+// ═══════════════ CONFIRM BUY ═══════════════
+async function confirmBuyCrypto() {
+  if (!buyingCoin) return;
+  const amt = parseFloat(document.getElementById('buy-amount').value);
+  if (!amt || amt <= 0 || amt > myBalance) return;
+  const btn = document.getElementById('confirm-buy-crypto-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Processing...';
+  try {
+    const result = await api('POST', '/api/transfer/purchase', {
+      amount: amt,
+      pin: 'crypto',
+      description: 'Bought ' + (amt / buyingCoin.livePrice).toFixed(6) + ' ' + buyingCoin.symbol,
+      itemId: buyingCoin.id,
+      isCrypto: true
+    });
+    myBalance = result.newBalance !== undefined ? result.newBalance : myBalance - amt;
+    // Update portfolio
+    const coinsQty = amt / buyingCoin.livePrice;
+    if (cryptoPortfolio[buyingCoin.id]) {
+      const p = cryptoPortfolio[buyingCoin.id];
+      const newQty = p.qty + coinsQty;
+      p.avgBuyPrice = (p.totalInvested + amt) / newQty;
+      p.totalInvested += amt;
+      p.qty = newQty;
+    } else {
+      cryptoPortfolio[buyingCoin.id] = { qty: coinsQty, avgBuyPrice: buyingCoin.livePrice, totalInvested: amt };
+    }
+    savePortfolio();
+    document.getElementById('crypto-balance').textContent = formatMoney(myBalance);
+    closeBuyCryptoModal();
+    renderMarketGrid();
+    updatePortfolioValue();
+    toast('✅ Bought ' + coinsQty.toFixed(4) + ' ' + buyingCoin.symbol + ' for ' + formatMoney(amt), 'var(--accent)', '#000');
+  } catch(e) {
+    // Offline fallback
+    const coinsQty = amt / buyingCoin.livePrice;
+    if (cryptoPortfolio[buyingCoin.id]) {
+      const p = cryptoPortfolio[buyingCoin.id];
+      const newQty = p.qty + coinsQty;
+      p.avgBuyPrice = (p.totalInvested + amt) / newQty;
+      p.totalInvested += amt;
+      p.qty = newQty;
+    } else {
+      cryptoPortfolio[buyingCoin.id] = { qty: coinsQty, avgBuyPrice: buyingCoin.livePrice, totalInvested: amt };
+    }
+    myBalance -= amt;
+    savePortfolio();
+    document.getElementById('crypto-balance').textContent = formatMoney(myBalance);
+    closeBuyCryptoModal();
+    renderMarketGrid();
+    updatePortfolioValue();
+    toast('✅ Bought ' + coinsQty.toFixed(4) + ' ' + buyingCoin.symbol, 'var(--accent)', '#000');
+  }
+}
+
+// ═══════════════ CONFIRM SELL ═══════════════
+async function confirmSellCrypto() {
+  if (!sellingCoin) return;
+  const holding = cryptoPortfolio[sellingCoin.id];
+  if (!holding) return;
+  const qty = parseFloat(document.getElementById('sell-amount').value);
+  if (!qty || qty <= 0 || qty > holding.qty) return;
+  const btn = document.getElementById('confirm-sell-crypto-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Processing...';
+  const receive = qty * sellingCoin.livePrice;
+  try {
+    const result = await api('POST', '/api/transfer/purchase', {
+      amount: -receive,
+      pin: '0000',
+      description: 'Sold ' + qty.toFixed(6) + ' ' + sellingCoin.symbol,
+      isSell: true
+    });
+    myBalance = result.newBalance !== undefined ? result.newBalance : myBalance + receive;
+    _doSellPortfolio(qty, receive);
+  } catch(e) {
+    myBalance += receive;
+    _doSellPortfolio(qty, receive);
+  }
+}
+
+function _doSellPortfolio(qty, receive) {
+  const id = sellingCoin.id;
+  const p = cryptoPortfolio[id];
+  const pct = qty / p.qty;
+  p.totalInvested -= p.totalInvested * pct;
+  p.qty -= qty;
+  if (p.qty < 0.000001) delete cryptoPortfolio[id];
+  savePortfolio();
+  document.getElementById('crypto-balance').textContent = formatMoney(myBalance);
+  closeSellCryptoModal();
+  renderMarketGrid();
+  renderPortfolio();
+  updatePortfolioValue();
+  toast('💸 Sold ' + qty.toFixed(4) + ' ' + sellingCoin.symbol + ' for ' + formatMoney(receive), 'var(--red)', '#fff');
+}
+
+// ═══════════════ TABS ═══════════════
+function showCryptoTab(tab) {
+  document.getElementById('tab-market').style.display = tab === 'market' ? '' : 'none';
+  document.getElementById('tab-portfolio').style.display = tab === 'portfolio' ? '' : 'none';
+  document.getElementById('tab-market-btn').classList.toggle('active', tab === 'market');
+  document.getElementById('tab-portfolio-btn').classList.toggle('active', tab === 'portfolio');
+  if (tab === 'portfolio') renderPortfolio();
+}
+
+// ═══════════════ TOAST ═══════════════
+function toast(msg, bg, color) {
+  const el = document.createElement('div');
+  el.style.cssText = `position:fixed;bottom:24px;right:24px;background:${bg};color:${color};padding:14px 20px;border-radius:12px;font-weight:600;font-size:14px;z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,0.4)`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ═══════════════ INIT ═══════════════
+async function init() {
+  try {
+    const data = await api('GET', '/api/user/me');
+    myBalance = data.balance;
+  } catch(e) { myBalance = 0; }
+  document.getElementById('crypto-balance').textContent = formatMoney(myBalance);
+  renderMarketGrid();
+  updatePortfolioValue();
+  // Price simulation every 30 seconds
+  setInterval(simulatePrices, 30000);
+}
+
+init();
+</script>
+</body>
+</html>

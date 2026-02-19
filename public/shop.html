@@ -855,6 +855,10 @@ function openSellModal(itemId) {
 function closeSellModal() {
   document.getElementById('sell-modal').classList.remove('open');
   sellingItem = null; sellEntry = null;
+  // Always reset button so next sell works without refresh
+  const btn = document.getElementById('confirm-sell-btn');
+  btn.disabled = false;
+  btn.innerHTML = '💸 Sell Now';
 }
 
 async function confirmSell() {

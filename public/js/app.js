@@ -86,6 +86,7 @@ function buildSidebar(activePage) {
     { href: '/dashboard', icon: '⬛', label: 'Dashboard' },
     { href: '/business', icon: '🏢', label: 'Businesses' },
     { href: '/shop', icon: '🛍️', label: 'Shop' },
+    { href: '/crypto', icon: '₿', label: 'Crypto' },
     { href: '/cards', icon: '💳', label: 'Cards' },
     { href: '/transfer', icon: '↗️', label: 'Transfer' },
     { href: '/history', icon: '📋', label: 'History' },

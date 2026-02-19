@@ -67,7 +67,7 @@ module.exports = router;
 // Shop purchase
 router.post('/purchase', auth, async (req, res) => {
   try {
-    const { amount, pin, description, itemId, isSell } = req.body;
+    const { amount, pin, description, itemId, isSell, isCrypto } = req.body;
     const user = req.user;
 
     // Sell = credit the account (no PIN needed)
@@ -84,6 +84,23 @@ router.post('/purchase', auth, async (req, res) => {
       });
       await user.save();
       return res.json({ message: 'Item sold!', newBalance: user.balance });
+    }
+
+    // Crypto buy — no PIN, just deduct
+    if (isCrypto) {
+      const amt = parseFloat(amount);
+      if (isNaN(amt) || amt <= 0) return res.status(400).json({ error: 'Invalid amount' });
+      if (user.balance < amt) return res.status(400).json({ error: 'Insufficient balance' });
+      user.balance -= amt;
+      user.transactions.push({
+        type: 'sent',
+        amount: amt,
+        description: description || 'Crypto purchase',
+        counterparty: 'NeoBank Crypto',
+        date: new Date()
+      });
+      await user.save();
+      return res.json({ message: 'Crypto bought!', newBalance: user.balance });
     }
 
     // Normal purchase — verify PIN
