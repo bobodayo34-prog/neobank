@@ -6,117 +6,57 @@
   <title>Cards — NeoBank</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    .card-scene { perspective: 1000px; margin: 0 auto 40px; max-width: 420px; }
-    .card-3d {
-      width: 100%;
-      aspect-ratio: 1.586;
-      transform-style: preserve-3d;
-      transition: transform 0.6s ease;
-      cursor: pointer;
-      position: relative;
-    }
+    .cards-nav { display: flex; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; }
+    .card-tab { padding: 10px 20px; border-radius: 100px; border: 1px solid var(--border); background: var(--surface); color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+    .card-tab.active { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+    .card-tab.add-tab { border-style: dashed; }
+    .card-tab.add-tab:hover { border-color: var(--accent); color: var(--accent); }
+    .card-scene { perspective: 1000px; margin: 0 auto 24px; max-width: 420px; }
+    .card-3d { width: 100%; aspect-ratio: 1.586; transform-style: preserve-3d; transition: transform 0.6s ease; cursor: pointer; position: relative; }
     .card-3d.flipped { transform: rotateY(180deg); }
-    .card-face {
-      position: absolute;
-      inset: 0;
-      border-radius: 20px;
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      padding: 28px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    }
-    .card-front {
-      background: linear-gradient(135deg, #0f1923 0%, #1a2d3d 40%, #0a3028 100%);
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-    .card-back {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      transform: rotateY(180deg);
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    /* Decorative circles */
-    .card-front::before {
-      content: '';
-      position: absolute;
-      top: -60px; right: -60px;
-      width: 220px; height: 220px;
-      background: radial-gradient(circle, rgba(0,212,168,0.15) 0%, transparent 70%);
-      border-radius: 50%;
-    }
-    .card-front::after {
-      content: '';
-      position: absolute;
-      bottom: -80px; left: -40px;
-      width: 280px; height: 280px;
-      background: radial-gradient(circle, rgba(61,139,255,0.1) 0%, transparent 70%);
-      border-radius: 50%;
-    }
-    .card-logo {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: relative; z-index: 1;
-    }
-    .card-bank { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: 2px; color: #fff; }
-    .card-bank span { color: var(--accent); }
-    .visa-logo { font-family: 'Syne', sans-serif; font-style: italic; font-size: 22px; font-weight: 800; color: rgba(255,255,255,0.9); letter-spacing: -1px; }
-    .chip {
-      width: 44px; height: 34px;
-      background: linear-gradient(135deg, #d4a017, #f0c040, #d4a017);
-      border-radius: 6px;
-      position: relative; z-index: 1;
-    }
-    .chip::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(0,0,0,0.3); }
-    .chip::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,0.3); }
-    .card-number {
-      font-family: 'Syne', sans-serif;
-      font-size: 20px;
-      font-weight: 600;
-      letter-spacing: 3px;
-      color: rgba(255,255,255,0.9);
-      position: relative; z-index: 1;
-    }
-    .card-bottom {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      position: relative; z-index: 1;
-    }
-    .card-field-label { font-size: 9px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-    .card-field-val { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9); letter-spacing: 1px; }
-    /* Back of card */
-    .mag-strip { height: 48px; background: rgba(0,0,0,0.4); margin: 0 -28px; }
-    .cvv-area {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 24px;
-    }
-    .cvv-strip {
-      flex: 1;
-      height: 36px;
-      background: rgba(255,255,255,0.85);
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      padding: 0 12px;
-      font-family: 'Syne', sans-serif;
-      font-size: 16px;
-      font-weight: 700;
-      color: #1a1a2e;
-      letter-spacing: 3px;
-    }
-    .cvv-label { font-size: 11px; color: rgba(255,255,255,0.5); }
-    .back-bank { font-family: 'Syne', sans-serif; font-size: 12px; color: rgba(255,255,255,0.4); margin-top: auto; }
-    .flip-hint { text-align: center; font-size: 13px; color: var(--text3); margin-bottom: 24px; }
-    .card-info { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 24px; }
-    .info-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
-    .info-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
-    .info-val { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+    .card-face { position: absolute; inset: 0; border-radius: 20px; backface-visibility: hidden; -webkit-backface-visibility: hidden; padding: 28px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .card-front { border: 1px solid rgba(255,255,255,0.1); }
+    .card-back { transform: rotateY(180deg); border: 1px solid rgba(255,255,255,0.08); }
+    .theme-ngn .card-front { background: linear-gradient(135deg, #0f1923 0%, #1a2d3d 40%, #0a3028 100%); }
+    .theme-ngn .card-back { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+    .theme-usd .card-front { background: linear-gradient(135deg, #1a0a2e 0%, #2d1a3d 40%, #1a0a28 100%); }
+    .theme-usd .card-back { background: linear-gradient(135deg, #1a0a2e 0%, #2d1040 100%); }
+    .theme-eur .card-front { background: linear-gradient(135deg, #0a1a2e 0%, #0f2840 40%, #0a2030 100%); }
+    .theme-eur .card-back { background: linear-gradient(135deg, #0a1a2e 0%, #102030 100%); }
+    .theme-gbp .card-front { background: linear-gradient(135deg, #1a0f0a 0%, #2d1a10 40%, #1a0a05 100%); }
+    .theme-gbp .card-back { background: linear-gradient(135deg, #1a0f0a 0%, #2a1005 100%); }
+    .theme-ngn .card-front::before { content:''; position:absolute; top:-60px; right:-60px; width:220px; height:220px; background:radial-gradient(circle, rgba(0,212,168,0.15) 0%, transparent 70%); border-radius:50%; }
+    .theme-usd .card-front::before { content:''; position:absolute; top:-60px; right:-60px; width:220px; height:220px; background:radial-gradient(circle, rgba(100,180,80,0.2) 0%, transparent 70%); border-radius:50%; }
+    .theme-eur .card-front::before { content:''; position:absolute; top:-60px; right:-60px; width:220px; height:220px; background:radial-gradient(circle, rgba(61,139,255,0.2) 0%, transparent 70%); border-radius:50%; }
+    .theme-gbp .card-front::before { content:''; position:absolute; top:-60px; right:-60px; width:220px; height:220px; background:radial-gradient(circle, rgba(255,160,50,0.2) 0%, transparent 70%); border-radius:50%; }
+    .card-logo { display:flex; justify-content:space-between; align-items:center; position:relative; z-index:1; }
+    .card-bank { font-family:'Syne',sans-serif; font-weight:800; font-size:18px; letter-spacing:2px; color:#fff; }
+    .card-bank span { color:var(--accent); }
+    .visa-logo { font-family:'Syne',sans-serif; font-style:italic; font-size:22px; font-weight:800; color:rgba(255,255,255,0.9); letter-spacing:-1px; }
+    .chip { width:44px; height:34px; background:linear-gradient(135deg,#d4a017,#f0c040,#d4a017); border-radius:6px; position:relative; z-index:1; }
+    .chip::before { content:''; position:absolute; top:50%; left:0; right:0; height:1px; background:rgba(0,0,0,0.3); }
+    .chip::after { content:''; position:absolute; left:50%; top:0; bottom:0; width:1px; background:rgba(0,0,0,0.3); }
+    .card-number { font-family:'Syne',sans-serif; font-size:20px; font-weight:600; letter-spacing:3px; color:rgba(255,255,255,0.9); position:relative; z-index:1; }
+    .card-bottom { display:flex; justify-content:space-between; align-items:flex-end; position:relative; z-index:1; }
+    .card-field-label { font-size:9px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+    .card-field-val { font-family:'Syne',sans-serif; font-size:14px; font-weight:600; color:rgba(255,255,255,0.9); letter-spacing:1px; }
+    .currency-badge { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; background:rgba(255,255,255,0.15); border-radius:6px; padding:3px 8px; color:#fff; }
+    .mag-strip { height:48px; background:rgba(0,0,0,0.4); margin:0 -28px; }
+    .cvv-area { display:flex; align-items:center; gap:12px; margin-top:24px; }
+    .cvv-strip { flex:1; height:36px; background:rgba(255,255,255,0.85); border-radius:4px; display:flex; align-items:center; padding:0 12px; font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:#1a1a2e; letter-spacing:3px; }
+    .cvv-label { font-size:11px; color:rgba(255,255,255,0.5); }
+    .back-bank { font-family:'Syne',sans-serif; font-size:12px; color:rgba(255,255,255,0.4); margin-top:auto; }
+    .flip-hint { text-align:center; font-size:13px; color:var(--text3); margin-bottom:20px; }
+    .card-info { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-top:20px; }
+    .info-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; }
+    .info-label { font-size:12px; color:var(--text2); margin-bottom:6px; }
+    .info-val { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; letter-spacing:1px; }
+    .currency-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:20px; }
+    .currency-opt { border:2px solid var(--border); border-radius:12px; padding:14px; cursor:pointer; transition:all 0.2s; text-align:center; }
+    .currency-opt:hover { border-color:var(--accent); background:var(--accent-glow); }
+    .currency-opt.selected { border-color:var(--accent); background:var(--accent-glow); }
+    .currency-symbol { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; }
+    .currency-name { font-size:12px; color:var(--text2); margin-top:4px; }
   </style>
 </head>
 <body>
@@ -124,70 +64,28 @@
   <aside class="sidebar" id="sidebar"></aside>
   <main class="main fade-in">
     <div class="page-header">
-      <h1 class="page-title">My Card</h1>
-      <div class="page-sub">Your NeoBank virtual debit card</div>
+      <h1 class="page-title">My Cards</h1>
+      <div class="page-sub">Up to 3 virtual cards with different currencies</div>
     </div>
 
-    <div class="card-scene">
-      <div class="card-3d" id="card3d" onclick="this.classList.toggle('flipped')">
-        <!-- Front -->
-        <div class="card-face card-front">
-          <div class="card-logo">
-            <div class="card-bank">NEO<span>BANK</span></div>
-            <div class="visa-logo">VISA</div>
-          </div>
-          <div class="chip"></div>
-          <div class="card-number" id="card-number">•••• •••• •••• ••••</div>
-          <div class="card-bottom">
-            <div>
-              <div class="card-field-label">Card Holder</div>
-              <div class="card-field-val" id="card-name">Loading...</div>
-            </div>
-            <div>
-              <div class="card-field-label">Expires</div>
-              <div class="card-field-val" id="card-expiry">••/••</div>
-            </div>
-          </div>
+    <div class="cards-nav" id="cards-nav"></div>
+    <div id="card-display"></div>
+
+    <!-- Add card modal -->
+    <div class="modal-overlay" id="add-modal">
+      <div class="modal">
+        <div class="modal-title">➕ Add New Card</div>
+        <p style="font-size:14px;color:var(--text2);margin-bottom:16px">Choose the currency for your new card:</p>
+        <div class="currency-grid">
+          <div class="currency-opt" onclick="selectCurrency('NGN')" data-cur="NGN"><div class="currency-symbol">₦</div><div class="currency-name">Nigerian Naira</div></div>
+          <div class="currency-opt" onclick="selectCurrency('USD')" data-cur="USD"><div class="currency-symbol">$</div><div class="currency-name">US Dollar</div></div>
+          <div class="currency-opt" onclick="selectCurrency('EUR')" data-cur="EUR"><div class="currency-symbol">€</div><div class="currency-name">Euro</div></div>
+          <div class="currency-opt" onclick="selectCurrency('GBP')" data-cur="GBP"><div class="currency-symbol">£</div><div class="currency-name">British Pound</div></div>
         </div>
-        <!-- Back -->
-        <div class="card-face card-back">
-          <div class="mag-strip"></div>
-          <div class="cvv-area">
-            <div class="cvv-strip" id="card-cvv">•••</div>
-            <div class="cvv-label">CVV</div>
-          </div>
-          <div style="margin-top:16px;font-size:11px;color:rgba(255,255,255,0.4);line-height:1.5">
-            This card is issued by NeoBank. Use for transfers within the NeoBank platform. Not valid for external transactions.
-          </div>
-          <div class="back-bank">NeoBank Virtual Card • neobankapp.com</div>
+        <div style="display:flex;gap:12px">
+          <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" id="add-card-btn" onclick="addCard()" style="flex:1" disabled>Add Card</button>
         </div>
-      </div>
-    </div>
-
-    <div class="flip-hint">👆 Click card to flip and see CVV</div>
-
-    <div class="card-info">
-      <div class="info-box">
-        <div class="info-label">Account Number</div>
-        <div class="info-val" id="info-acct" style="font-size:14px;letter-spacing:2px">Loading...</div>
-      </div>
-      <div class="info-box">
-        <div class="info-label">CVV Code</div>
-        <div class="info-val" id="info-cvv">•••</div>
-      </div>
-      <div class="info-box">
-        <div class="info-label">Expiry Date</div>
-        <div class="info-val" id="info-expiry">••/••</div>
-      </div>
-      <div class="info-box">
-        <div class="info-label">Card Status</div>
-        <div class="info-val" style="color:var(--accent)">● Active</div>
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:20px">
-      <div style="font-size:13px;color:var(--text2);line-height:1.7">
-        <strong style="color:var(--text)">🔒 Security Notice:</strong> Keep your CVV and PIN private. Never share them with anyone. Your account number is used for receiving transfers from other NeoBank users.
       </div>
     </div>
   </main>
@@ -201,30 +99,134 @@
   buildSidebar('/cards');
   startUsagePing();
 
-  function formatAccountDisplay(acct) {
-    return acct.replace(/(\d{4})(\d{4})(\d{2})/g, '$1 $2 $3').trim();
+  const STORAGE_KEY = 'neo_cards_' + (auth.user()?.accountNumber || 'default');
+  const currencyInfo = {
+    NGN: { symbol: '₦', name: 'Naira', theme: 'theme-ngn' },
+    USD: { symbol: '$', name: 'Dollar', theme: 'theme-usd' },
+    EUR: { symbol: '€', name: 'Euro', theme: 'theme-eur' },
+    GBP: { symbol: '£', name: 'Pound', theme: 'theme-gbp' }
+  };
+
+  let userData = null;
+  let cards = [];
+  let activeCardIndex = 0;
+  let selectedCurrency = null;
+
+  function loadCards() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    cards = saved ? JSON.parse(saved) : [{ currency: 'NGN' }];
+    if (!saved) saveCards();
   }
 
-  async function loadCard() {
+  function saveCards() { localStorage.setItem(STORAGE_KEY, JSON.stringify(cards)); }
+
+  function renderNav() {
+    const nav = document.getElementById('cards-nav');
+    nav.innerHTML = cards.map((c, i) => `
+      <button class="card-tab ${i === activeCardIndex ? 'active' : ''}" onclick="switchCard(${i})">
+        ${currencyInfo[c.currency].symbol} ${c.currency} Card
+      </button>
+    `).join('');
+    if (cards.length < 3) nav.innerHTML += `<button class="card-tab add-tab" onclick="openModal()">+ Add Card</button>`;
+  }
+
+  function renderCard() {
+    if (!userData) return;
+    const card = cards[activeCardIndex];
+    const cur = currencyInfo[card.currency];
+    const acct = userData.accountNumber;
+    const display = acct.slice(0, 4) + ' •••• ' + acct.slice(-4);
+
+    document.getElementById('card-display').innerHTML = `
+      <div class="card-scene">
+        <div class="card-3d ${cur.theme}" onclick="this.classList.toggle('flipped')">
+          <div class="card-face card-front">
+            <div class="card-logo">
+              <div class="card-bank">NEO<span>BANK</span></div>
+              <span class="currency-badge">${cur.symbol} ${card.currency}</span>
+            </div>
+            <div class="chip"></div>
+            <div class="card-number">${display}</div>
+            <div class="card-bottom">
+              <div><div class="card-field-label">Card Holder</div><div class="card-field-val">${userData.fullName.toUpperCase()}</div></div>
+              <div><div class="card-field-label">Expires</div><div class="card-field-val">${userData.expiry}</div></div>
+              <div class="visa-logo">VISA</div>
+            </div>
+          </div>
+          <div class="card-face card-back">
+            <div class="mag-strip"></div>
+            <div class="cvv-area">
+              <div class="cvv-strip">${userData.cvv}</div>
+              <div class="cvv-label">CVV</div>
+            </div>
+            <div style="margin-top:16px;font-size:11px;color:rgba(255,255,255,0.4);line-height:1.5">${cur.symbol} ${card.currency} Card — NeoBank virtual card for platform transfers only.</div>
+            <div class="back-bank">NeoBank • ${card.currency} Virtual Card</div>
+          </div>
+        </div>
+      </div>
+      <div class="flip-hint">👆 Click card to flip and see CVV</div>
+      <div class="card-info">
+        <div class="info-box"><div class="info-label">Account Number</div><div class="info-val" style="font-size:14px;letter-spacing:2px">${acct}</div></div>
+        <div class="info-box"><div class="info-label">CVV Code</div><div class="info-val">${userData.cvv}</div></div>
+        <div class="info-box"><div class="info-label">Expiry Date</div><div class="info-val">${userData.expiry}</div></div>
+        <div class="info-box"><div class="info-label">Currency</div><div class="info-val" style="color:var(--accent)">${cur.symbol} ${card.currency}</div></div>
+      </div>
+      ${activeCardIndex > 0 ? `<div style="margin-top:16px"><button class="btn btn-danger" onclick="deleteCard(${activeCardIndex})">🗑 Remove This Card</button></div>` : ''}
+      <div class="card" style="margin-top:20px"><div style="font-size:13px;color:var(--text2);line-height:1.7"><strong style="color:var(--text)">🔒 Security Notice:</strong> Keep your CVV and PIN private. All cards share the same account number — currency is for display purposes.</div></div>
+    `;
+  }
+
+  function switchCard(i) { activeCardIndex = i; renderNav(); renderCard(); }
+
+  function openModal() {
+    selectedCurrency = null;
+    document.querySelectorAll('.currency-opt').forEach(el => { el.classList.remove('selected'); el.style.opacity=''; el.style.pointerEvents=''; });
+    cards.forEach(c => {
+      const opt = document.querySelector(`[data-cur="${c.currency}"]`);
+      if (opt) { opt.style.opacity='0.3'; opt.style.pointerEvents='none'; }
+    });
+    document.getElementById('add-card-btn').disabled = true;
+    document.getElementById('add-modal').classList.add('open');
+  }
+
+  function closeModal() { document.getElementById('add-modal').classList.remove('open'); }
+
+  function selectCurrency(cur) {
+    selectedCurrency = cur;
+    document.querySelectorAll('.currency-opt').forEach(el => el.classList.remove('selected'));
+    document.querySelector(`[data-cur="${cur}"]`).classList.add('selected');
+    document.getElementById('add-card-btn').disabled = false;
+  }
+
+  function addCard() {
+    if (!selectedCurrency || cards.length >= 3) return;
+    cards.push({ currency: selectedCurrency });
+    saveCards();
+    activeCardIndex = cards.length - 1;
+    closeModal();
+    renderNav();
+    renderCard();
+  }
+
+  function deleteCard(i) {
+    if (!confirm('Remove this card?')) return;
+    cards.splice(i, 1);
+    saveCards();
+    activeCardIndex = 0;
+    renderNav();
+    renderCard();
+  }
+
+  async function init() {
+    loadCards();
     try {
-      const data = await api('GET', '/api/user/me');
-      const acct = data.accountNumber;
-      // Format: show first 4 and last 4, mask middle
-      const display = acct.slice(0, 4) + ' •••• ' + acct.slice(-4);
-
-      document.getElementById('card-number').textContent = display;
-      document.getElementById('card-name').textContent = data.fullName.toUpperCase();
-      document.getElementById('card-expiry').textContent = data.expiry;
-      document.getElementById('card-cvv').textContent = data.cvv;
-      document.getElementById('info-acct').textContent = acct;
-      document.getElementById('info-cvv').textContent = data.cvv;
-      document.getElementById('info-expiry').textContent = data.expiry;
-    } catch (e) {
-      console.error(e);
-    }
+      userData = await api('GET', '/api/user/me');
+      renderNav();
+      renderCard();
+    } catch(e) { console.error(e); }
   }
 
-  loadCard();
+  init();
 </script>
 </body>
 </html>

@@ -30,10 +30,13 @@
       background: rgba(255,255,255,0.05);
       border-radius: 50%;
     }
-    .balance-label { font-size: 13px; font-weight: 500; color: rgba(0,0,0,0.6); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-    .balance-amount { font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; color: #fff; letter-spacing: -2px; position: relative; z-index: 1; }
+    .balance-label { font-size: 13px; font-weight: 500; color: rgba(0,0,0,0.6); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+    .balance-amount { font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; color: #fff; letter-spacing: -2px; position: relative; z-index: 1; transition: filter 0.3s; }
+    .balance-amount.hidden { filter: blur(12px); user-select: none; }
     .balance-acct { font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px; letter-spacing: 2px; }
-    .balance-actions { display: flex; gap: 12px; margin-top: 20px; position: relative; z-index: 1; }
+    .balance-actions { display: flex; gap: 12px; margin-top: 20px; position: relative; z-index: 1; flex-wrap: wrap; }
+    .hide-btn { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; padding: 4px 10px; font-size: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s; }
+    .hide-btn:hover { background: rgba(0,0,0,0.35); }
     .balance-btn {
       background: rgba(0,0,0,0.2);
       border: 1px solid rgba(255,255,255,0.2);
@@ -78,8 +81,11 @@
 
     <!-- Balance card -->
     <div class="balance-card">
-      <div class="balance-label">Total Balance</div>
-      <div class="balance-amount" id="balance-amount">$0.00</div>
+      <div class="balance-label">
+        <span>Total Balance</span>
+        <button class="hide-btn" id="hide-btn" onclick="toggleBalance()">👁 Hide</button>
+      </div>
+      <div class="balance-amount" id="balance-amount">₦0.00</div>
       <div class="balance-acct" id="balance-acct">Account: ——————————</div>
       <div class="balance-actions">
         <a href="/transfer" class="balance-btn">↗ Send Money</a>
@@ -150,7 +156,6 @@
   buildSidebar('/dashboard');
   startUsagePing();
 
-  const iconMap = { sent: '↗', received: '↙', business: '🏢', income: '💰' };
   const txIcons = { sent: '↗️', received: '↙️', business: '🏢', income: '💰' };
 
   // Greeting
@@ -160,6 +165,31 @@
 
   let userData = null;
   let bizTimerInterval = null;
+  let balanceHidden = localStorage.getItem('balance_hidden') === 'true';
+
+  function formatNaira(n) {
+    return '₦' + Number(n).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function toggleBalance() {
+    balanceHidden = !balanceHidden;
+    localStorage.setItem('balance_hidden', balanceHidden);
+    applyBalanceVisibility();
+  }
+
+  function applyBalanceVisibility() {
+    const el = document.getElementById('balance-amount');
+    const btn = document.getElementById('hide-btn');
+    if (balanceHidden) {
+      el.classList.add('hidden');
+      btn.textContent = '👁 Show';
+    } else {
+      el.classList.remove('hidden');
+      btn.textContent = '👁 Hide';
+    }
+  }
+
+  applyBalanceVisibility();
 
   function renderBizPreview(businesses) {
     const el = document.getElementById('biz-preview');
@@ -171,7 +201,7 @@
       <div class="biz-mini">
         <div class="biz-mini-name">${b.name}</div>
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">${b.type} · ${b.earningType}</div>
-        <div class="biz-mini-earn">${formatMoney(b.earnings)}</div>
+        <div class="biz-mini-earn">${formatNaira(b.earnings)}</div>
         <div class="biz-mini-timer" data-payout="${b.nextPayout}">⏱ calculating...</div>
       </div>
     `).join('');
@@ -193,7 +223,7 @@
             <div class="tx-desc">${tx.description || tx.type}</div>
             <div class="tx-date">${formatDate(tx.date)}</div>
           </div>
-          <div class="tx-amount ${isPos ? 'pos' : 'neg'}">${isPos ? '+' : '-'}${formatMoney(tx.amount)}</div>
+          <div class="tx-amount ${isPos ? 'pos' : 'neg'}">${isPos ? '+' : '-'}${formatNaira(tx.amount)}</div>
         </div>
       `;
     }).join('');
@@ -216,8 +246,9 @@
 
       document.getElementById('welcome-name').textContent = data.fullName;
       document.getElementById('acct-display').textContent = `Account #${data.accountNumber}`;
-      document.getElementById('balance-amount').textContent = formatMoney(data.balance);
+      document.getElementById('balance-amount').textContent = formatNaira(data.balance);
       document.getElementById('balance-acct').textContent = `Account: ${data.accountNumber}`;
+      applyBalanceVisibility();
       document.getElementById('stat-biz').textContent = data.businesses?.length || 0;
       document.getElementById('stat-transfers').textContent = data.totalTransfersSent || 0;
       document.getElementById('stat-txs').textContent = data.transactions?.length || 0;

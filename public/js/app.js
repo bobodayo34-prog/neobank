@@ -54,9 +54,9 @@ function showAlert(el, msg, type = 'error') {
   setTimeout(() => el.className = 'alert', 4000);
 }
 
-// Format currency
+// Format currency - Naira default
 function formatMoney(n) {
-  return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return '₦' + Number(n).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 // Format date
