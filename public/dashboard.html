@@ -180,11 +180,14 @@
   function applyBalanceVisibility() {
     const el = document.getElementById('balance-amount');
     const btn = document.getElementById('hide-btn');
+    if (!el || !btn) return;
     if (balanceHidden) {
-      el.classList.add('hidden');
+      el.style.filter = 'blur(12px)';
+      el.style.userSelect = 'none';
       btn.textContent = '👁 Show';
     } else {
-      el.classList.remove('hidden');
+      el.style.filter = '';
+      el.style.userSelect = '';
       btn.textContent = '👁 Hide';
     }
   }
