@@ -64,6 +64,20 @@
     .my-item.recurring { border-color: rgba(249,115,22,0.4); }
     .my-item-timer { font-size: 10px; color: #f97316; font-weight: 600; margin-top: 4px; }
     .my-item-timer.overdue { color: var(--red); animation: pulse-orange 0.5s infinite; }
+    /* Quantity & sell */
+    .qty-badge { position: absolute; top: 12px; left: 12px; background: var(--accent); color: var(--bg); font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 100px; }
+    .sell-btn { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--red); background: transparent; color: var(--red); font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-top: 6px; }
+    .sell-btn:hover { background: rgba(255,71,87,0.1); }
+    .item-price-old { font-size: 11px; color: var(--text3); text-decoration: line-through; margin-bottom: 2px; }
+    .sell-value { font-size: 10px; color: #f97316; margin-top: 2px; }
+    .cheap-badge { display:inline-block; font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#22c55e;margin-bottom:6px; }
+    .stackable-badge { display:inline-block; font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;background:rgba(59,130,246,0.15);border:1px solid #3b82f6;color:#3b82f6;margin-bottom:6px; }
+    .qty-controls { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+    .qty-btn { width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center; }
+    .qty-btn:hover { border-color:var(--accent);color:var(--accent); }
+    .qty-num { font-family:'Syne',sans-serif;font-size:18px;font-weight:800;min-width:32px;text-align:center; }
+    /* Sell modal */
+    .sell-price { font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--red);margin-bottom:20px; }
   </style>
 </head>
 <body>
@@ -120,6 +134,14 @@
     <div class="purchase-item-preview">
       <div class="purchase-emoji" id="modal-emoji">🚗</div>
       <div class="purchase-name" id="modal-name">Item</div>
+      <div id="modal-qty-row" style="display:none;align-items:center;justify-content:center;gap:12px;margin:10px 0">
+        <button class="qty-btn" onclick="changeQty(-1)">−</button>
+        <div>
+          <div class="qty-num" id="modal-qty-num">1</div>
+          <div style="font-size:10px;color:var(--text3);text-align:center" id="modal-qty-max">Max 10</div>
+        </div>
+        <button class="qty-btn" onclick="changeQty(1)">+</button>
+      </div>
       <div class="purchase-price" id="modal-price">₦0</div>
     </div>
     <div class="purchase-confirm">
@@ -138,6 +160,31 @@
     <div style="display:flex;gap:12px;margin-top:20px">
       <button class="btn btn-secondary" onclick="closeBuyModal()">Cancel</button>
       <button class="btn btn-primary" id="confirm-buy-btn" onclick="confirmPurchase()" style="flex:1" disabled>Buy Now 🛒</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Sell modal -->
+<div class="modal-overlay" id="sell-modal">
+  <div class="modal">
+    <div class="modal-title">💸 Sell Item</div>
+    <div class="purchase-item-preview">
+      <div class="purchase-emoji" id="sell-modal-emoji">🚗</div>
+      <div class="purchase-name" id="sell-modal-name">Item</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:8px">You paid: <span id="sell-modal-paid" style="color:var(--text);font-weight:700"></span></div>
+      <div class="sell-price" id="sell-modal-price">₦0</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Sell value = 70% of purchase price</div>
+    </div>
+    <div class="purchase-confirm">
+      <div class="purchase-row"><span class="lbl">Sell Price (70%)</span><span id="sell-confirm-price" style="color:var(--red);font-weight:700">₦0</span></div>
+      <div class="purchase-row"><span class="lbl">Your Balance</span><span id="sell-confirm-balance">₦0</span></div>
+      <div class="purchase-row" style="border-top:1px solid var(--border);margin-top:6px;padding-top:12px"><span class="lbl">Balance After</span><span id="sell-confirm-after" style="color:var(--accent);font-weight:700">₦0</span></div>
+    </div>
+    <div id="sell-alert" class="alert" style="margin-top:12px"></div>
+    <div style="display:flex;gap:12px;margin-top:20px">
+      <button class="btn btn-secondary" onclick="closeSellModal()">Cancel</button>
+      <button class="btn" style="flex:1;background:var(--red);color:#fff;" id="confirm-sell-btn" onclick="confirmSell()">💸 Sell Now</button>
     </div>
   </div>
 </div>
@@ -421,9 +468,45 @@ const SHOP_ITEMS = [
   { id:'travel7', cat:'Travel', name:'Bali Private Villa 2 Weeks', emoji:'🌺', desc:'6-bed villa, private pool, butler', price:2500000 },
   { id:'travel8', cat:'Travel', name:'Private Jet Charter Lagos-Dubai', emoji:'✈️', desc:'Gulfstream G650, 8 passengers', price:25000000 },
 
+  // EVERYDAY / CHEAP ITEMS
+  { id:'cheap1', cat:'Everyday', name:'Indomie Noodles Pack (40)', emoji:'🍜', desc:'Full carton instant noodles, chicken flavor', price:3500, stackable:true, maxQty:50 },
+  { id:'cheap2', cat:'Everyday', name:'Pure Water Sachet (20)', emoji:'💧', desc:'20 sachets of pure water 75cl', price:500, stackable:true, maxQty:100 },
+  { id:'cheap3', cat:'Everyday', name:'Bread Loaf (Agege)', emoji:'🍞', desc:'Fresh Agege bread, large loaf', price:800, stackable:true, maxQty:30 },
+  { id:'cheap4', cat:'Everyday', name:'Egg Crate (30 Eggs)', emoji:'🥚', desc:'Fresh farm eggs, crate of 30', price:3000, stackable:true, maxQty:20 },
+  { id:'cheap5', cat:'Everyday', name:'Rice (50kg bag)', emoji:'🍚', desc:'Ofada rice, 50kg bag, premium grade', price:45000, stackable:true, maxQty:20 },
+  { id:'cheap6', cat:'Everyday', name:'Palm Oil (25 litres)', emoji:'🫙', desc:'Fresh red palm oil, 25L jerry can', price:15000, stackable:true, maxQty:20 },
+  { id:'cheap7', cat:'Everyday', name:'Soft Drink Pack (Coke 60cl x12)', emoji:'🥤', desc:'Coke 60cl bottles, pack of 12', price:4200, stackable:true, maxQty:50 },
+  { id:'cheap8', cat:'Everyday', name:'Malt Drink Pack (12)', emoji:'🧃', desc:'Malta Guinness 33cl, pack of 12', price:3600, stackable:true, maxQty:50 },
+  { id:'cheap9', cat:'Everyday', name:'Toothpaste & Brush Set', emoji:'🦷', desc:'Close-Up gel toothpaste + Oral-B brush', price:1200, stackable:true, maxQty:30 },
+  { id:'cheap10', cat:'Everyday', name:'Tissue Paper (12 Rolls)', emoji:'🧻', desc:'3-ply tissue, pack of 12 rolls', price:2500, stackable:true, maxQty:50 },
+  { id:'cheap11', cat:'Everyday', name:'Petrol (5 Litres)', emoji:'⛽', desc:'5L fuel for generator or motorbike', price:3500, stackable:true, maxQty:100 },
+  { id:'cheap12', cat:'Everyday', name:'Airtime Recharge ₦500', emoji:'📱', desc:'MTN/Airtel/Glo/9mobile airtime', price:500, stackable:true, maxQty:50 },
+  { id:'cheap13', cat:'Everyday', name:'Airtime Recharge ₦1,000', emoji:'📱', desc:'MTN/Airtel/Glo/9mobile airtime', price:1000, stackable:true, maxQty:50 },
+  { id:'cheap14', cat:'Everyday', name:'Bole & Fish (Street)', emoji:'🐟', desc:'Roasted plantain + peppered fish', price:2000, stackable:true, maxQty:20 },
+  { id:'cheap15', cat:'Everyday', name:'Suya (500g)', emoji:'🥩', desc:'Grilled spicy beef suya, 500g', price:3000, stackable:true, maxQty:20 },
+  { id:'cheap16', cat:'Everyday', name:'Laundry Detergent (Omo 5kg)', emoji:'🧺', desc:'Omo washing powder, 5kg bag', price:5000, stackable:true, maxQty:20 },
+  { id:'cheap17', cat:'Everyday', name:'Mosquito Coil Pack (10)', emoji:'🌀', desc:'Raid mosquito coils, pack of 10', price:700, stackable:true, maxQty:50 },
+  { id:'cheap18', cat:'Everyday', name:'Candle Pack (12)', emoji:'🕯️', desc:'NEPA special candles, pack of 12', price:1500, stackable:true, maxQty:50 },
+  { id:'cheap19', cat:'Everyday', name:'Nescafe Coffee Jar', emoji:'☕', desc:'Nescafe Gold 200g jar', price:4500, stackable:true, maxQty:20 },
+  { id:'cheap20', cat:'Everyday', name:'Bournvita (900g)', emoji:'🥛', desc:'Cadbury Bournvita, 900g tin', price:4200, stackable:true, maxQty:20 },
+  { id:'cheap21', cat:'Everyday', name:'Phone Screen Protector', emoji:'📱', desc:'Tempered glass, universal fit', price:1000, stackable:true, maxQty:20 },
+  { id:'cheap22', cat:'Everyday', name:'Recharge Card Printer Paper', emoji:'🖨️', desc:'A4 recharge card paper, 100 sheets', price:2000, stackable:true, maxQty:20 },
+  { id:'cheap23', cat:'Everyday', name:'Bottled Water (1.5L x12)', emoji:'🍶', desc:'Eva/Swan water, 12-pack carton', price:3000, stackable:true, maxQty:50 },
+  { id:'cheap24', cat:'Everyday', name:'Groundnut (1kg)', emoji:'🥜', desc:'Roasted groundnuts, 1kg bag', price:1500, stackable:true, maxQty:30 },
+  { id:'cheap25', cat:'Everyday', name:'Chin-Chin (500g)', emoji:'🍪', desc:'Crunchy chin-chin snack, 500g pack', price:1000, stackable:true, maxQty:30 },
+
+  // STACKABLE LUXURY (can buy multiple)
+  { id:'stack1', cat:'Jewellery', name:'Gold Chain 14k (Extra)', emoji:'⛓️', desc:'14k gold chain, 18 inch, buy multiple', price:850000, stackable:true, maxQty:10 },
+  { id:'stack2', cat:'Clothes', name:'Designer Sneakers (Extra Pair)', emoji:'👟', desc:'Buy multiple pairs for collection', price:350000, stackable:true, maxQty:10 },
+  { id:'stack3', cat:'Clothes', name:'Premium Aso-Ebi Fabric (per yard)', emoji:'🧵', desc:'Lace fabric, per yard, buy as much as needed', price:25000, stackable:true, maxQty:50 },
+  { id:'stack4', cat:'Food & Dining', name:'Dom Pérignon Champagne Bottle', emoji:'🍾', desc:'2013 vintage, buy as many as you want', price:280000, stackable:true, maxQty:100 },
+  { id:'stack5', cat:'Food & Dining', name:'Hennessy VSOP (70cl)', emoji:'🥃', desc:'Premium cognac, stock your bar', price:45000, stackable:true, maxQty:100 },
+  { id:'stack6', cat:'Everyday', name:'Dollars (USD $100 cash)', emoji:'💵', desc:'Physical USD $100 bill equivalent', price:160000, stackable:true, maxQty:1000 },
+  { id:'stack7', cat:'Everyday', name:'Gold Bar (1g)', emoji:'🥇', desc:'1 gram 24k gold bar, investment grade', price:120000, stackable:true, maxQty:500 },
+
 ];
 
-const CATEGORIES = ['All', 'Cars', 'Houses', 'Clothes', 'Shoes', 'Jewellery', 'Bills', 'School Fees', 'Weddings', 'Parties', 'Taxes', 'Food & Dining', 'Travel'];
+const CATEGORIES = ['All', 'Everyday', 'Cars', 'Houses', 'Clothes', 'Shoes', 'Jewellery', 'Bills', 'School Fees', 'Weddings', 'Parties', 'Taxes', 'Food & Dining', 'Travel'];
 
 let currentCat = 'All';
 let searchQuery = '';
@@ -486,7 +569,7 @@ function renderCategories() {
 }
 
 function getCatEmoji(c) {
-  const map = { All:'🛍️', Cars:'🚗', Houses:'🏠', Clothes:'👔', Shoes:'👟', Jewellery:'💎', Bills:'⚡', 'School Fees':'🎓', Weddings:'💒', Parties:'🎉', Taxes:'📊', 'Food & Dining':'🍽️', Travel:'✈️' };
+  const map = { All:'🛍️', Everyday:'🛒', Cars:'🚗', Houses:'🏠', Clothes:'👔', Shoes:'👟', Jewellery:'💎', Bills:'⚡', 'School Fees':'🎓', Weddings:'💒', Parties:'🎉', Taxes:'📊', 'Food & Dining':'🍽️', Travel:'✈️' };
   return map[c] || '';
 }
 
@@ -547,15 +630,21 @@ function renderShopGrid() {
     const btnDisabled = permOwned || onCooldown;
     let btnText = onCooldown ? '⏱ Active' : permOwned ? '✓ Purchased' : canAfford ? '🛒 Buy Now' : '💸 Insufficient Balance';
 
+    const ownedQty = getItemQty(item.id);
+    const cheapOrStack = item.stackable || item.price < 10000;
     return `
       <div class="shop-item">
         ${badge}
+        ${ownedQty > 0 && item.stackable ? '<div class="qty-badge">×' + ownedQty + ' owned</div>' : ''}
         <span class="item-emoji">${item.emoji}</span>
         <div class="item-category">${item.cat}</div>
+        ${item.price < 10000 ? '<div class="cheap-badge">💚 Budget</div>' : ''}
+        ${item.stackable && item.price >= 10000 ? '<div class="stackable-badge">📦 Stackable</div>' : ''}
         <div class="item-name">${item.name}</div>
         <div class="item-desc">${item.desc}</div>
         ${timerHtml}
         <div class="item-price">${formatMoney(item.price)}</div>
+        ${item.stackable ? '<div class="sell-value">Max: ' + (item.maxQty||10) + ' • Sell back 70%</div>' : ''}
         <button class="buy-btn" onclick="openBuyModal('${item.id}')" ${btnDisabled ? 'disabled' : ''}>
           ${btnText}
         </button>
@@ -584,14 +673,19 @@ function renderOwnedItems() {
         let timerBit = '';
         if (active) timerBit = '<div class="my-item-timer" data-item-id="' + item.id + '">⏱ ' + formatCountdown(msLeft) + '</div>';
         else if (overdue) timerBit = '<div class="my-item-timer overdue">⚠️ Due now!</div>';
+        const qty = o.qty || 1;
+        const canSell = !item.recurring;
         return `
-          <div class="my-item ${item.recurring ? 'recurring' : ''}">
+          <div class="my-item ${item.recurring ? 'recurring' : ''}" style="position:relative">
+            ${qty > 1 ? '<div class="qty-badge">×' + qty + '</div>' : ''}
             <div class="my-item-emoji">${item.emoji}</div>
             <div class="my-item-name">${item.name}</div>
-            <div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:4px">${formatMoney(item.price)}</div>
+            <div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:4px">${formatMoney(o.pricePaid || item.price)}</div>
+            ${item.stackable ? '<div style="font-size:10px;color:#3b82f6;margin-bottom:2px">📦 ×' + qty + ' owned</div>' : ''}
             ${item.recurring ? '<div style="font-size:10px;color:#f97316;margin-bottom:2px">🔄 ' + getRecurringLabel(item) + '</div>' : ''}
             ${timerBit}
             <div class="my-item-date">${new Date(o.date || o.purchasedAt).toLocaleDateString()}</div>
+            ${canSell ? '<button class="sell-btn" onclick="openSellModal(\'' + item.id + '\')">💸 Sell (70%)</button>' : ''}
           </div>
         `;
       }).join('')}
@@ -607,28 +701,50 @@ function showTab(tab) {
   if (tab === 'owned') renderOwnedItems();
 }
 
+let buyQty = 1;
+
 function openBuyModal(itemId) {
   const item = SHOP_ITEMS.find(i => i.id === itemId);
   if (!item) return;
   purchasingItem = item;
+  buyQty = 1;
 
   document.getElementById('modal-emoji').textContent = item.emoji;
   document.getElementById('modal-name').textContent = item.name;
-  document.getElementById('modal-price').textContent = formatMoney(item.price);
-  document.getElementById('confirm-price').textContent = formatMoney(item.price);
-  document.getElementById('confirm-balance').textContent = formatMoney(myBalance);
-  document.getElementById('confirm-after').textContent = formatMoney(myBalance - item.price);
 
-  if (myBalance < item.price) {
-    document.getElementById('confirm-after').style.color = 'var(--red)';
+  // Show/hide quantity controls for stackable items
+  const qtyRow = document.getElementById('modal-qty-row');
+  if (item.stackable) {
+    qtyRow.style.display = 'flex';
+    document.getElementById('modal-qty-num').textContent = buyQty;
+    document.getElementById('modal-qty-max').textContent = 'Max ' + (item.maxQty || 10);
   } else {
-    document.getElementById('confirm-after').style.color = 'var(--accent)';
+    qtyRow.style.display = 'none';
   }
 
+  updateBuyModalPrices();
   document.querySelectorAll('.pin-digit').forEach(d => d.value = '');
   document.getElementById('confirm-buy-btn').disabled = true;
   document.getElementById('buy-alert').className = 'alert';
   document.getElementById('buy-modal').classList.add('open');
+}
+
+function changeQty(delta) {
+  if (!purchasingItem) return;
+  const max = purchasingItem.maxQty || 10;
+  buyQty = Math.max(1, Math.min(max, buyQty + delta));
+  document.getElementById('modal-qty-num').textContent = buyQty;
+  updateBuyModalPrices();
+}
+
+function updateBuyModalPrices() {
+  if (!purchasingItem) return;
+  const total = purchasingItem.price * buyQty;
+  document.getElementById('modal-price').textContent = formatMoney(total) + (buyQty > 1 ? ' (' + buyQty + ' × ' + formatMoney(purchasingItem.price) + ')' : '');
+  document.getElementById('confirm-price').textContent = formatMoney(total);
+  document.getElementById('confirm-balance').textContent = formatMoney(myBalance);
+  document.getElementById('confirm-after').textContent = formatMoney(myBalance - total);
+  document.getElementById('confirm-after').style.color = myBalance < total ? 'var(--red)' : 'var(--accent)';
 }
 
 function closeBuyModal() {
@@ -654,7 +770,7 @@ async function confirmPurchase() {
   const btn = document.getElementById('confirm-buy-btn');
   const alertEl = document.getElementById('buy-alert');
 
-  if (myBalance < purchasingItem.price) {
+  if (myBalance < purchasingItem.price * buyQty) {
     showAlert(alertEl, 'Insufficient balance!');
     return;
   }
@@ -664,19 +780,26 @@ async function confirmPurchase() {
 
   try {
     // Verify PIN and deduct balance via transfer to self with description
+    const totalAmount = purchasingItem.price * buyQty;
     const result = await api('POST', '/api/transfer/purchase', {
-      amount: purchasingItem.price,
+      amount: totalAmount,
       pin,
-      description: `Purchased: ${purchasingItem.name}`,
+      description: `Purchased x${buyQty}: ${purchasingItem.name}`,
       itemId: purchasingItem.id
     });
 
-    // Save to owned — for recurring items, update existing entry; for one-time, add new
+    // Save to owned — handle qty, recurring, and stackable
     const now = Date.now();
     const existIdx = ownedItems.findIndex(o => o.id === purchasingItem.id);
-    const newEntry = { id: purchasingItem.id, date: new Date().toISOString(), purchasedAt: now };
+    const newEntry = {
+      id: purchasingItem.id,
+      date: new Date().toISOString(),
+      purchasedAt: now,
+      qty: (purchasingItem.stackable ? ((existIdx >= 0 ? (ownedItems[existIdx].qty || 1) : 0) + buyQty) : 1),
+      pricePaid: purchasingItem.price
+    };
     if (existIdx >= 0) {
-      ownedItems[existIdx] = newEntry; // Reset timer for recurring
+      ownedItems[existIdx] = newEntry;
     } else {
       ownedItems.unshift(newEntry);
     }
@@ -691,7 +814,7 @@ async function confirmPurchase() {
     // Show success toast
     const toast = document.createElement('div');
     toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--accent);color:var(--bg);padding:14px 20px;border-radius:12px;font-weight:600;font-size:14px;z-index:9999;animation:fadeIn 0.3s ease';
-    toast.textContent = `✅ ${purchasingItem.emoji} ${purchasingItem.name} purchased!`;
+    toast.textContent = `✅ ${purchasingItem.emoji} ${buyQty > 1 ? "x"+buyQty+" " : ""}${purchasingItem.name} purchased!`;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
 
@@ -699,6 +822,94 @@ async function confirmPurchase() {
     showAlert(alertEl, e.message);
     btn.disabled = false;
     btn.textContent = 'Buy Now 🛒';
+  }
+}
+
+function getItemQty(id) {
+  const entry = ownedItems.find(o => o.id === id);
+  return entry ? (entry.qty || 1) : 0;
+}
+
+let sellingItem = null;
+let sellEntry = null;
+
+function openSellModal(itemId) {
+  const item = SHOP_ITEMS.find(i => i.id === itemId);
+  const entry = ownedItems.find(o => o.id === itemId);
+  if (!item || !entry) return;
+  sellingItem = item;
+  sellEntry = entry;
+  const pricePaid = entry.pricePaid || item.price;
+  const sellPrice = Math.floor(pricePaid * 0.7);
+  document.getElementById('sell-modal-emoji').textContent = item.emoji;
+  document.getElementById('sell-modal-name').textContent = item.name + (entry.qty > 1 ? ' (×' + entry.qty + ')' : '');
+  document.getElementById('sell-modal-paid').textContent = formatMoney(pricePaid);
+  document.getElementById('sell-modal-price').textContent = formatMoney(sellPrice);
+  document.getElementById('sell-confirm-price').textContent = formatMoney(sellPrice);
+  document.getElementById('sell-confirm-balance').textContent = formatMoney(myBalance);
+  document.getElementById('sell-confirm-after').textContent = formatMoney(myBalance + sellPrice);
+  document.getElementById('sell-alert').className = 'alert';
+  document.getElementById('sell-modal').classList.add('open');
+}
+
+function closeSellModal() {
+  document.getElementById('sell-modal').classList.remove('open');
+  sellingItem = null; sellEntry = null;
+}
+
+async function confirmSell() {
+  if (!sellingItem || !sellEntry) return;
+  const btn = document.getElementById('confirm-sell-btn');
+  const alertEl = document.getElementById('sell-alert');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Processing...';
+  try {
+    const pricePaid = sellEntry.pricePaid || sellingItem.price;
+    const sellPrice = Math.floor(pricePaid * 0.7);
+    // Credit account via sell endpoint
+    const result = await api('POST', '/api/transfer/purchase', {
+      amount: -sellPrice,
+      pin: '0000', // sell doesn't need PIN — handled server side as credit
+      description: 'Sold: ' + sellingItem.name,
+      itemId: sellingItem.id,
+      isSell: true
+    });
+    // Remove from owned
+    const idx = ownedItems.findIndex(o => o.id === sellingItem.id);
+    if (idx >= 0) {
+      if ((ownedItems[idx].qty || 1) > 1) {
+        ownedItems[idx].qty -= 1;
+      } else {
+        ownedItems.splice(idx, 1);
+      }
+    }
+    saveOwned();
+    myBalance = myBalance + sellPrice; // optimistic update
+    if (result && result.newBalance !== undefined) myBalance = result.newBalance;
+    document.getElementById('shop-balance').textContent = formatMoney(myBalance);
+    closeSellModal();
+    renderShopGrid();
+    renderOwnedItems();
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--red);color:#fff;padding:14px 20px;border-radius:12px;font-weight:600;font-size:14px;z-index:9999;';
+    toast.textContent = '💸 ' + sellingItem.name + ' sold for ' + formatMoney(sellPrice);
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  } catch(e) {
+    // Even if server fails, complete sell locally for items that are pure client-side
+    const pricePaid = sellEntry.pricePaid || sellingItem.price;
+    const sellPrice = Math.floor(pricePaid * 0.7);
+    const idx = ownedItems.findIndex(o => o.id === sellingItem.id);
+    if (idx >= 0) {
+      if ((ownedItems[idx].qty || 1) > 1) { ownedItems[idx].qty -= 1; }
+      else { ownedItems.splice(idx, 1); }
+    }
+    saveOwned();
+    myBalance += sellPrice;
+    document.getElementById('shop-balance').textContent = formatMoney(myBalance);
+    closeSellModal();
+    renderShopGrid();
+    renderOwnedItems();
   }
 }
 

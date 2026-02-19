@@ -67,9 +67,26 @@ module.exports = router;
 // Shop purchase
 router.post('/purchase', auth, async (req, res) => {
   try {
-    const { amount, pin, description, itemId } = req.body;
+    const { amount, pin, description, itemId, isSell } = req.body;
     const user = req.user;
 
+    // Sell = credit the account (no PIN needed)
+    if (isSell) {
+      const sellAmt = Math.abs(parseFloat(amount));
+      if (isNaN(sellAmt) || sellAmt <= 0) return res.status(400).json({ error: 'Invalid amount' });
+      user.balance += sellAmt;
+      user.transactions.push({
+        type: 'received',
+        amount: sellAmt,
+        description: description || 'Item sold',
+        counterparty: 'NeoBank Shop',
+        date: new Date()
+      });
+      await user.save();
+      return res.json({ message: 'Item sold!', newBalance: user.balance });
+    }
+
+    // Normal purchase — verify PIN
     const pinValid = await user.comparePin(pin);
     if (!pinValid) return res.status(400).json({ error: 'Invalid PIN' });
 
