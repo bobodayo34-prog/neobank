@@ -85,6 +85,7 @@ function buildSidebar(activePage) {
   const nav = [
     { href: '/dashboard', icon: '⬛', label: 'Dashboard' },
     { href: '/business', icon: '🏢', label: 'Businesses' },
+    { href: '/shop', icon: '🛍️', label: 'Shop' },
     { href: '/cards', icon: '💳', label: 'Cards' },
     { href: '/transfer', icon: '↗️', label: 'Transfer' },
     { href: '/history', icon: '📋', label: 'History' },
@@ -126,20 +127,11 @@ function startUsagePing() {
   }, 60000);
 }
 
-// Format usage time (based on 1hr=1day logic)
+// Format usage time
 function formatUsage(minutes) {
-  // 1 day = 60 real minutes, 1 week = 7*60=420 min, 1 month = 60*60=3600 min, 1 year = 12*3600=43200 min
-  const virtualMinutes = minutes;
-  const virtualDays = Math.floor(virtualMinutes / 60);
+  const virtualDays = Math.floor(minutes / 60);
   const virtualWeeks = Math.floor(virtualDays / 7);
   const virtualMonths = Math.floor(virtualDays / 30);
   const virtualYears = Math.floor(virtualDays / 365);
-
-  return {
-    realMinutes: minutes,
-    virtualDays,
-    virtualWeeks,
-    virtualMonths,
-    virtualYears
-  };
+  return { realMinutes: minutes, virtualDays, virtualWeeks, virtualMonths, virtualYears };
 }

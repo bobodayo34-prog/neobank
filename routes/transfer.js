@@ -63,3 +63,33 @@ router.post('/send', auth, async (req, res) => {
 });
 
 module.exports = router;
+
+// Shop purchase
+router.post('/purchase', auth, async (req, res) => {
+  try {
+    const { amount, pin, description, itemId } = req.body;
+    const user = req.user;
+
+    const pinValid = await user.comparePin(pin);
+    if (!pinValid) return res.status(400).json({ error: 'Invalid PIN' });
+
+    const amt = parseFloat(amount);
+    if (isNaN(amt) || amt <= 0) return res.status(400).json({ error: 'Invalid amount' });
+    if (user.balance < amt) return res.status(400).json({ error: 'Insufficient balance' });
+
+    user.balance -= amt;
+    user.transactions.push({
+      type: 'sent',
+      amount: amt,
+      description: description || 'Shop purchase',
+      counterparty: 'NeoBank Shop',
+      date: new Date()
+    });
+    await user.save();
+
+    res.json({ message: 'Purchase successful!', newBalance: user.balance });
+  } catch(err) {
+    console.error(err);
+    res.status(500).json({ error: 'Purchase failed' });
+  }
+});

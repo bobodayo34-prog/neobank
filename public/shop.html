@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop — NeoBank</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .shop-cats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+    .cat-btn { padding: 10px 18px; border-radius: 100px; border: 1px solid var(--border); background: var(--surface); color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+    .cat-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+    .cat-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+    .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+    .shop-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+    }
+    .shop-item:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .item-emoji { font-size: 40px; margin-bottom: 12px; display: block; }
+    .item-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .item-desc { font-size: 12px; color: var(--text2); margin-bottom: 12px; line-height: 1.5; }
+    .item-price { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--accent); margin-bottom: 12px; }
+    .item-category { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+    .buy-btn { width: 100%; padding: 10px; border-radius: 8px; border: none; background: var(--accent); color: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .buy-btn:hover { background: var(--accent2); }
+    .buy-btn:disabled { background: var(--surface2); color: var(--text3); cursor: not-allowed; }
+    .owned-badge { position: absolute; top: 12px; right: 12px; background: rgba(0,212,168,0.15); border: 1px solid var(--accent); color: var(--accent); font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 100px; }
+    .balance-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .balance-bar-label { font-size: 13px; color: var(--text2); }
+    .balance-bar-val { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; color: var(--accent); }
+    .search-bar { position: relative; margin-bottom: 20px; }
+    .search-bar input { padding-left: 40px !important; }
+    .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none; }
+    .items-count { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
+    /* Purchase modal */
+    .purchase-item-preview { text-align: center; padding: 20px 0; }
+    .purchase-emoji { font-size: 56px; margin-bottom: 12px; }
+    .purchase-name { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .purchase-price { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--accent); margin-bottom: 20px; }
+    .purchase-confirm { background: var(--surface2); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+    .purchase-row { display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0; }
+    .purchase-row .lbl { color: var(--text2); }
+    .my-items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .my-item { background: var(--surface); border: 1px solid rgba(0,212,168,0.2); border-radius: 12px; padding: 16px; text-align: center; }
+    .my-item-emoji { font-size: 32px; margin-bottom: 8px; }
+    .my-item-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .my-item-date { font-size: 11px; color: var(--text3); }
+    .tab-row { display: flex; gap: 4px; background: var(--bg2); border-radius: 12px; padding: 4px; margin-bottom: 24px; }
+    .tab-row-btn { flex: 1; padding: 10px; border: none; background: none; color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; border-radius: 9px; cursor: pointer; transition: all 0.2s; }
+    .tab-row-btn.active { background: var(--surface2); color: var(--text); }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main fade-in">
+    <div class="page-header">
+      <h1 class="page-title">🛍️ NeoBank Shop</h1>
+      <div class="page-sub">Spend your NeoBank balance on anything you want</div>
+    </div>
+
+    <!-- Balance bar -->
+    <div class="balance-bar">
+      <div><div class="balance-bar-label">Available Balance</div><div class="balance-bar-val" id="shop-balance">₦0.00</div></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="owned-count" style="font-size:13px;color:var(--text2)">0 items owned</span>
+        <button class="btn btn-secondary" onclick="showTab('owned')" style="font-size:13px;padding:8px 14px">My Items</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-row">
+      <button class="tab-row-btn active" onclick="showTab('shop')" id="tab-shop-btn">🛒 Shop</button>
+      <button class="tab-row-btn" onclick="showTab('owned')" id="tab-owned-btn">🏆 My Items</button>
+    </div>
+
+    <!-- Shop tab -->
+    <div id="tab-shop">
+      <!-- Categories -->
+      <div class="shop-cats" id="shop-cats"></div>
+
+      <!-- Search -->
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="form-control" id="shop-search" placeholder="Search items..." oninput="filterItems()">
+      </div>
+
+      <div class="items-count" id="items-count"></div>
+      <div class="shop-grid" id="shop-grid"></div>
+    </div>
+
+    <!-- Owned tab -->
+    <div id="tab-owned" style="display:none">
+      <div id="owned-grid"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Purchase modal -->
+<div class="modal-overlay" id="buy-modal">
+  <div class="modal">
+    <div class="modal-title">Confirm Purchase</div>
+    <div class="purchase-item-preview">
+      <div class="purchase-emoji" id="modal-emoji">🚗</div>
+      <div class="purchase-name" id="modal-name">Item</div>
+      <div class="purchase-price" id="modal-price">₦0</div>
+    </div>
+    <div class="purchase-confirm">
+      <div class="purchase-row"><span class="lbl">Item Price</span><span id="confirm-price">₦0</span></div>
+      <div class="purchase-row"><span class="lbl">Your Balance</span><span id="confirm-balance">₦0</span></div>
+      <div class="purchase-row" style="border-top:1px solid var(--border);margin-top:6px;padding-top:12px"><span class="lbl">Balance After</span><span id="confirm-after" style="color:var(--accent);font-weight:700">₦0</span></div>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Enter your PIN to confirm:</div>
+    <div class="pin-inputs" id="modal-pin-inputs">
+      <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+      <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+      <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+      <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+    </div>
+    <div id="buy-alert" class="alert" style="margin-top:12px"></div>
+    <div style="display:flex;gap:12px;margin-top:20px">
+      <button class="btn btn-secondary" onclick="closeBuyModal()">Cancel</button>
+      <button class="btn btn-primary" id="confirm-buy-btn" onclick="confirmPurchase()" style="flex:1" disabled>Buy Now 🛒</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/js/sidebar.js"></script>
+<script>
+if (!auth.requireAuth()) throw new Error();
+injectSidebar();
+buildSidebar('/shop');
+startUsagePing();
+
+// ===================== SHOP DATA =====================
+const SHOP_ITEMS = [
+  // CARS - Luxury
+  { id:'car1', cat:'Cars', name:'Mercedes-Benz G-Wagon G63 AMG', emoji:'🚙', desc:'2024 model, twin-turbo V8, matte black', price:85000000 },
+  { id:'car2', cat:'Cars', name:'Rolls-Royce Phantom VIII', emoji:'🚗', desc:'Ultra luxury sedan, bespoke interior', price:250000000 },
+  { id:'car3', cat:'Cars', name:'Lamborghini Urus S', emoji:'🏎️', desc:'Super SUV, 666hp, Pearl White', price:120000000 },
+  { id:'car4', cat:'Cars', name:'Ferrari SF90 Stradale', emoji:'🏎️', desc:'Hybrid hypercar, 986hp, Rosso Corsa', price:200000000 },
+  { id:'car5', cat:'Cars', name:'Bentley Bentayga Speed', emoji:'🚙', desc:'Fastest SUV, W12 engine, Midnight Emerald', price:95000000 },
+  { id:'car6', cat:'Cars', name:'Porsche 911 Turbo S', emoji:'🚗', desc:'992 generation, 650hp, GT Silver', price:65000000 },
+  { id:'car7', cat:'Cars', name:'BMW M5 Competition', emoji:'🚗', desc:'2024 model, 627hp, Brooklyn Grey', price:42000000 },
+  { id:'car8', cat:'Cars', name:'Mercedes-Benz S680 Maybach', emoji:'🚗', desc:'Ultra luxury, V12 biturbo, Obsidian Black', price:180000000 },
+  { id:'car9', cat:'Cars', name:'Aston Martin DBX707', emoji:'🚙', desc:'Most powerful Aston SUV, 707hp', price:110000000 },
+  { id:'car10', cat:'Cars', name:'McLaren 720S Spider', emoji:'🏎️', desc:'Retractable hardtop, 710hp, Papaya Spark', price:150000000 },
+  { id:'car11', cat:'Cars', name:'Bugatti Chiron Super Sport', emoji:'🏎️', desc:'Top speed 304mph, 1600hp, one of 30', price:1500000000 },
+  { id:'car12', cat:'Cars', name:'Koenigsegg Agera RS', emoji:'🏎️', desc:'1341hp, 0-400-0 world record', price:800000000 },
+  { id:'car13', cat:'Cars', name:'Pagani Huayra Roadster', emoji:'🏎️', desc:'Italian masterpiece, AMG V12', price:700000000 },
+  { id:'car14', cat:'Cars', name:'Range Rover SVAutobiography', emoji:'🚙', desc:'LWB, plug-in hybrid, Carpathian Grey', price:75000000 },
+  { id:'car15', cat:'Cars', name:'Cadillac Escalade ESV Platinum', emoji:'🚙', desc:'Full size luxury SUV, curved OLED display', price:55000000 },
+  { id:'car16', cat:'Cars', name:'Toyota Land Cruiser 300 GR Sport', emoji:'🚙', desc:'V6 twin-turbo, off-road king', price:35000000 },
+  { id:'car17', cat:'Cars', name:'Lexus LX 600 Ultra Luxury', emoji:'🚙', desc:'4-seater VIP cabin, massaging seats', price:48000000 },
+  { id:'car18', cat:'Cars', name:'Maserati GranTurismo Folgore', emoji:'🏎️', desc:'First electric Maserati, 761hp', price:90000000 },
+  { id:'car19', cat:'Cars', name:'Audi RS Q8 Performance', emoji:'🚙', desc:'630hp, carbon ceramic brakes', price:52000000 },
+  { id:'car20', cat:'Cars', name:'Lamborghini Revuelto', emoji:'🏎️', desc:'New V12 hybrid, 1015hp', price:280000000 },
+  { id:'car21', cat:'Cars', name:'Porsche Cayenne Turbo GT', emoji:'🚙', desc:'640hp, Nurburgring SUV record', price:70000000 },
+  { id:'car22', cat:'Cars', name:'Ferrari Purosangue', emoji:'🚙', desc:'First Ferrari SUV, naturally aspirated V12', price:220000000 },
+  { id:'car23', cat:'Cars', name:'Rolls-Royce Cullinan Black Badge', emoji:'🚙', desc:'Most powerful Rolls SUV, Black Badge', price:310000000 },
+  { id:'car24', cat:'Cars', name:'Bentley Flying Spur Speed', emoji:'🚗', desc:'W12, 626hp, fastest Bentley sedan', price:105000000 },
+  { id:'car25', cat:'Cars', name:'McLaren 765LT Spider', emoji:'🏎️', desc:'Longtail heritage, 755hp', price:175000000 },
+  { id:'car26', cat:'Cars', name:'Mercedes-AMG GT 63 S E Performance', emoji:'🏎️', desc:'Hybrid hypercar, 843hp 4-door', price:130000000 },
+  { id:'car27', cat:'Cars', name:'BMW XM Label Red', emoji:'🚙', desc:'738hp, M hybrid V8, iconic design', price:88000000 },
+  { id:'car28', cat:'Cars', name:'Lamborghini Huracan STO', emoji:'🏎️', desc:'Street homologated race car, 640hp', price:145000000 },
+  { id:'car29', cat:'Cars', name:'Porsche 918 Spyder', emoji:'🏎️', desc:'Weissach package, 887hp hybrid', price:450000000 },
+  { id:'car30', cat:'Cars', name:'Aston Martin Valkyrie', emoji:'🏎️', desc:'F1 for the road, 1160hp Cosworth V12', price:600000000 },
+  // More affordable cars
+  { id:'car31', cat:'Cars', name:'Toyota Camry XSE 2024', emoji:'🚗', desc:'V6, sporty trim, Midnight Black', price:18000000 },
+  { id:'car32', cat:'Cars', name:'Honda Accord Sport', emoji:'🚗', desc:'2.0T, 192hp, Sonic Grey Pearl', price:15000000 },
+  { id:'car33', cat:'Cars', name:'Volkswagen Golf GTI', emoji:'🚗', desc:'2.0 TSI, 241hp, hot hatch classic', price:20000000 },
+  { id:'car34', cat:'Cars', name:'Ford Mustang GT500', emoji:'🚗', desc:'Shelby, supercharged V8, 760hp', price:45000000 },
+  { id:'car35', cat:'Cars', name:'Chevrolet Corvette Z06', emoji:'🏎️', desc:'Flat-plane crank V8, 670hp', price:75000000 },
+  { id:'car36', cat:'Cars', name:'Dodge Challenger SRT Demon 170', emoji:'🚗', desc:'1025hp, drag strip monster', price:60000000 },
+  { id:'car37', cat:'Cars', name:'Nissan GT-R Nismo', emoji:'🏎️', desc:'Godzilla, 600hp, hand-built engine', price:55000000 },
+  { id:'car38', cat:'Cars', name:'Toyota GR Supra A90', emoji:'🏎️', desc:'B58 inline-6, 382hp', price:28000000 },
+  { id:'car39', cat:'Cars', name:'BMW M3 Competition xDrive', emoji:'🚗', desc:'510hp, touring, all-weather beast', price:40000000 },
+  { id:'car40', cat:'Cars', name:'Mercedes-AMG C63 S E Performance', emoji:'🚗', desc:'Hybrid 4cyl, 671hp, controversial but fast', price:50000000 },
+  { id:'car41', cat:'Cars', name:'Tesla Model S Plaid', emoji:'🚗', desc:'1020hp electric, 0-60 in 1.99s', price:55000000 },
+  { id:'car42', cat:'Cars', name:'Rivian R1T Launch Edition', emoji:'🚙', desc:'Electric pickup, quad-motor, 835hp', price:48000000 },
+  { id:'car43', cat:'Cars', name:'Land Rover Defender 90 V8', emoji:'🚙', desc:'525hp supercharged V8, heritage icon', price:45000000 },
+  { id:'car44', cat:'Cars', name:'Jeep Wrangler Rubicon 392', emoji:'🚙', desc:'6.4L HEMI V8, off-road king', price:32000000 },
+  { id:'car45', cat:'Cars', name:'Porsche Macan Turbo Electric', emoji:'🚙', desc:'639hp EV SUV, next gen', price:62000000 },
+  { id:'car46', cat:'Cars', name:'Hyundai IONIQ 6 N', emoji:'🚗', desc:'641hp electric performance sedan', price:30000000 },
+  { id:'car47', cat:'Cars', name:'Genesis GV80 Prestige', emoji:'🚙', desc:'Korean luxury flagship SUV', price:35000000 },
+  { id:'car48', cat:'Cars', name:'Volvo XC90 Recharge Ultimate', emoji:'🚙', desc:'PHEV, Crystal White, Bowers & Wilkins audio', price:38000000 },
+  { id:'car49', cat:'Cars', name:'Alfa Romeo Stelvio Quadrifoglio', emoji:'🚙', desc:'503hp, Ferrari-derived V6', price:42000000 },
+  { id:'car50', cat:'Cars', name:'Maserati Levante Trofeo', emoji:'🚙', desc:'590hp Ferrari V8 in an SUV', price:72000000 },
+
+  // Motorcycles
+  { id:'car51', cat:'Cars', name:'Ducati Panigale V4 R', emoji:'🏍️', desc:'240hp, race homologation, Ducati Red', price:18000000 },
+  { id:'car52', cat:'Cars', name:'BMW M1000RR', emoji:'🏍️', desc:'212hp, M Performance superbike', price:15000000 },
+  { id:'car53', cat:'Cars', name:'Kawasaki Ninja ZX-10RR', emoji:'🏍️', desc:'WSB spec, 214hp', price:12000000 },
+  { id:'car54', cat:'Cars', name:'Harley-Davidson CVO Road Glide', emoji:'🏍️', desc:'Milwaukee-Eight 121, touring king', price:10000000 },
+  { id:'car55', cat:'Cars', name:'Triumph Rocket 3 R Black', emoji:'🏍️', desc:'2500cc, largest production engine', price:8000000 },
+
+  // HOUSES
+  { id:'house1', cat:'Houses', name:'Lagos Island Penthouse', emoji:'🏙️', desc:'5 bed, 6 bath, infinity pool, ocean view, Banana Island', price:500000000 },
+  { id:'house2', cat:'Houses', name:'Abuja Maitama Mansion', emoji:'🏛️', desc:'7 bed, 8 bath, cinema, gym, smart home', price:350000000 },
+  { id:'house3', cat:'Houses', name:'Beverly Hills Mega Mansion', emoji:'🏰', desc:'10 bed, 12 bath, tennis court, 2 pools', price:2000000000 },
+  { id:'house4', cat:'Houses', name:'Dubai Palm Jumeirah Villa', emoji:'🏝️', desc:'6 bed, private beach, smart automation', price:1500000000 },
+  { id:'house5', cat:'Houses', name:'London Mayfair Townhouse', emoji:'🏡', desc:'5 floors, 6 bed, garage, rooftop terrace', price:1200000000 },
+  { id:'house6', cat:'Houses', name:'Lekki Phase 1 Detached Duplex', emoji:'🏠', desc:'4 bed, 4 bath, BQ, swimming pool', price:120000000 },
+  { id:'house7', cat:'Houses', name:'Victoria Island Semi-detached', emoji:'🏘️', desc:'3 bed, 3 bath, 24hr light, estate', price:85000000 },
+  { id:'house8', cat:'Houses', name:'Ikoyi Luxury Apartment', emoji:'🏢', desc:'3 bed, 2 bath, gym, concierge', price:95000000 },
+  { id:'house9', cat:'Houses', name:'New York City Penthouse', emoji:'🏙️', desc:'Central Park view, 4 bed, private elevator', price:3000000000 },
+  { id:'house10', cat:'Houses', name:'Monaco Waterfront Villa', emoji:'🏝️', desc:'Yacht berth, 5 bed, panoramic sea view', price:2500000000 },
+  { id:'house11', cat:'Houses', name:'Gwarimpa Estate House', emoji:'🏠', desc:'4 bed, 3 bath, fully detached, solar', price:45000000 },
+  { id:'house12', cat:'Houses', name:'Port Harcourt GRA Mansion', emoji:'🏛️', desc:'5 bed duplex, BQ, swimming pool', price:80000000 },
+  { id:'house13', cat:'Houses', name:'Enugu GRA Detached House', emoji:'🏡', desc:'4 bed, 3 bath, large compound', price:35000000 },
+  { id:'house14', cat:'Houses', name:'Singapore Sentosa Cove Bungalow', emoji:'🏝️', desc:'Private island, 6 bed, sea access', price:1800000000 },
+  { id:'house15', cat:'Houses', name:'Paris 8th Arrondissement Apartment', emoji:'🏢', desc:'Eiffel Tower view, 4 bed, renovated', price:900000000 },
+
+  // CLOTHES
+  { id:'cloth1', cat:'Clothes', name:'Louis Vuitton Monogram Suit', emoji:'👔', desc:'Bespoke men\'s suit, custom tailored', price:4500000 },
+  { id:'cloth2', cat:'Clothes', name:'Gucci GG Tracksuit', emoji:'👕', desc:'Logo tracksuit, velvet, limited edition', price:850000 },
+  { id:'cloth3', cat:'Clothes', name:'Balenciaga Triple S Outfit', emoji:'👟', desc:'Full look with Triple S sneakers', price:1200000 },
+  { id:'cloth4', cat:'Clothes', name:'Versace Medusa Silk Shirt', emoji:'👘', desc:'100% silk, hand-printed Medusa', price:650000 },
+  { id:'cloth5', cat:'Clothes', name:'Hermès Birkin Bag 35cm', emoji:'👜', desc:'Togo leather, Gold hardware, Etoupe', price:8000000 },
+  { id:'cloth6', cat:'Clothes', name:'Chanel Classic Flap Bag', emoji:'👜', desc:'Caviar leather, gold chain, timeless', price:5500000 },
+  { id:'cloth7', cat:'Clothes', name:'Dolce & Gabbana Crown Suit', emoji:'👔', desc:'Hand-embroidered royal blue, runway', price:6000000 },
+  { id:'cloth8', cat:'Clothes', name:'Off-White Industrial Belt Outfit', emoji:'👕', desc:'Full Virgil Abloh look, SS24', price:750000 },
+  { id:'cloth9', cat:'Clothes', name:'Prada Re-Nylon Bomber', emoji:'🧥', desc:'Recycled nylon, minimalist luxury', price:950000 },
+  { id:'cloth10', cat:'Clothes', name:'Burberry Heritage Trench Coat', emoji:'🧥', desc:'Iconic check lining, cashmere blend', price:1800000 },
+  { id:'cloth11', cat:'Clothes', name:'Dior Oblique Cargo Pants', emoji:'👖', desc:'Signature oblique jacquard, tailored fit', price:1100000 },
+  { id:'cloth12', cat:'Clothes', name:'Saint Laurent Leather Jacket', emoji:'🧥', desc:'Moto jacket, black lambskin, YSL stamp', price:2200000 },
+  { id:'cloth13', cat:'Clothes', name:'Fendi FF Logo Hoodie', emoji:'👕', desc:'Cashmere blend, monogram all-over', price:780000 },
+  { id:'cloth14', cat:'Clothes', name:'Tom Ford Windsor Suit', emoji:'👔', desc:'Charcoal wool, peak lapel, full canvas', price:3500000 },
+  { id:'cloth15', cat:'Clothes', name:'Ankara Senator Premium Set', emoji:'👘', desc:'Hand-woven, custom embroidery, Lagos designer', price:150000 },
+
+  // SHOES
+  // MORE CARS (car56-car105)
+  { id:'car56', cat:'Cars', name:'Bugatti Veyron Super Sport', emoji:'🏎️', desc:'1200hp, former fastest production car, only 30 made', price:900000000 },
+  { id:'car57', cat:'Cars', name:'Lamborghini Sian FKP 37', emoji:'🏎️', desc:'819hp hybrid, gold capacitors, 63 produced', price:750000000 },
+  { id:'car58', cat:'Cars', name:'Ferrari LaFerrari Aperta', emoji:'🏎️', desc:'950hp hybrid hypercar, open top, 210 made', price:1200000000 },
+  { id:'car59', cat:'Cars', name:'McLaren Senna GTR', emoji:'🏎️', desc:'Track-only, 825hp, aerodynamic monster', price:550000000 },
+  { id:'car60', cat:'Cars', name:'Mercedes-Benz AMG One', emoji:'🏎️', desc:'F1 engine in road car, 1063hp hybrid', price:650000000 },
+  { id:'car61', cat:'Cars', name:'Aston Martin One-77', emoji:'🏎️', desc:'750hp NA V12, only 77 built, bespoke', price:700000000 },
+  { id:'car62', cat:'Cars', name:'Ferrari 812 Superfast', emoji:'🏎️', desc:'800hp NA V12, rear-wheel steering', price:190000000 },
+  { id:'car63', cat:'Cars', name:'Lamborghini Countach LPI 800-4', emoji:'🏎️', desc:'Revival icon, 803hp hybrid, only 112 made', price:500000000 },
+  { id:'car64', cat:'Cars', name:'Porsche GT3 RS', emoji:'🏎️', desc:'525hp, swan-neck wing, track weapon', price:85000000 },
+  { id:'car65', cat:'Cars', name:'BMW M8 Competition Gran Coupe', emoji:'🚗', desc:'617hp V8, 4-door coupe, M xDrive', price:58000000 },
+  { id:'car66', cat:'Cars', name:'Mercedes-Benz EQS 580', emoji:'🚗', desc:'516hp EV, MBUX Hyperscreen, range king', price:65000000 },
+  { id:'car67', cat:'Cars', name:'Lucid Air Sapphire', emoji:'🚗', desc:'1234hp triple motor EV, 500+ mile range', price:95000000 },
+  { id:'car68', cat:'Cars', name:'Rimac Nevera', emoji:'🏎️', desc:'1914hp, 0-60 in 1.74s, EV hypercar', price:850000000 },
+  { id:'car69', cat:'Cars', name:'Pininfarina Battista', emoji:'🏎️', desc:'1877hp, Italian EV hypercar, 150 made', price:700000000 },
+  { id:'car70', cat:'Cars', name:'Lotus Evija', emoji:'🏎️', desc:'2000hp EV, lightest hypercar, 130 units', price:680000000 },
+  { id:'car71', cat:'Cars', name:'Zenvo Aurora Tur', emoji:'🏎️', desc:'1250hp, Danish hypercar, bespoke build', price:800000000 },
+  { id:'car72', cat:'Cars', name:'Czinger 21C', emoji:'🏎️', desc:'3D-printed hybrid, 1233hp, 8.55s Nürburgring', price:600000000 },
+  { id:'car73', cat:'Cars', name:'Acura NSX Type S', emoji:'🏎️', desc:'600hp hybrid, final edition, only 350 built', price:75000000 },
+  { id:'car74', cat:'Cars', name:'Honda Civic Type R 2024', emoji:'🏎️', desc:'FWD Nürburgring record, 315hp, daily track', price:18000000 },
+  { id:'car75', cat:'Cars', name:'Subaru WRX STI S209', emoji:'🚗', desc:'341hp, STI tune, US only special edition', price:22000000 },
+  { id:'car76', cat:'Cars', name:'Mitsubishi Lancer Evo X Final Edition', emoji:'🚗', desc:'303hp, AWD legend, last ever Evo', price:15000000 },
+  { id:'car77', cat:'Cars', name:'Toyota GR Yaris Rallye', emoji:'🚗', desc:'261hp, rally homologation, circuit/Pikes Peak', price:16000000 },
+  { id:'car78', cat:'Cars', name:'Ford GT 2024', emoji:'🏎️', desc:'660hp EcoBoost V6, carbon fibre, 500 built/yr', price:320000000 },
+  { id:'car79', cat:'Cars', name:'Chevrolet Camaro ZL1 Final Edition', emoji:'🚗', desc:'650hp supercharged V8, last Camaro ever', price:40000000 },
+  { id:'car80', cat:'Cars', name:'Dodge Viper ACR', emoji:'🏎️', desc:'645hp V10, extreme downforce kit', price:72000000 },
+  { id:'car81', cat:'Cars', name:'Alfa Romeo Giulia GTA', emoji:'🚗', desc:'540hp, carbon bodywork, 500 units', price:65000000 },
+  { id:'car82', cat:'Cars', name:'Lancia Delta HF Integrale Evo 2', emoji:'🚗', desc:'Classic rally icon, 215hp, collector piece', price:35000000 },
+  { id:'car83', cat:'Cars', name:'Peugeot 9X8 Hypercar', emoji:'🏎️', desc:'LMH race car, no rear wing, 680hp hybrid', price:400000000 },
+  { id:'car84', cat:'Cars', name:'Toyota GR010 Hybrid Le Mans', emoji:'🏎️', desc:'Le Mans Hypercar, 671hp, road-legal version', price:280000000 },
+  { id:'car85', cat:'Cars', name:'Dallara Stradale Factory', emoji:'🏎️', desc:'Italian open-wheel road car, 400hp', price:110000000 },
+  { id:'car86', cat:'Cars', name:'Hennessey Venom F5', emoji:'🏎️', desc:'1817hp, 300mph+ target, 24 units', price:720000000 },
+  { id:'car87', cat:'Cars', name:'SSC Tuatara Aggressor', emoji:'🏎️', desc:'1750hp twin-turbo V8, speed record holder', price:650000000 },
+  { id:'car88', cat:'Cars', name:'Shelby Cobra 427 S/C Original', emoji:'🏎️', desc:'1960s race icon, collector, AC Cobra', price:500000000 },
+  { id:'car89', cat:'Cars', name:'Volkswagen ID.3 Pro Performance', emoji:'🚗', desc:'EV hot-hatch, 201hp, fun daily driver', price:12000000 },
+  { id:'car90', cat:'Cars', name:'Kia EV6 GT', emoji:'🚗', desc:'577hp, 0-60 in 3.4s, AWD electric', price:20000000 },
+  { id:'car91', cat:'Cars', name:'Polestar 1 Electric Hybrid', emoji:'🚗', desc:'619hp PHEV, carbon body, only 1500 built', price:55000000 },
+  { id:'car92', cat:'Cars', name:'Fisker Ocean Ultra', emoji:'🚙', desc:'EV SUV, California-mode solar roof', price:28000000 },
+  { id:'car93', cat:'Cars', name:'BYD Yangwang U9 Hypercar', emoji:'🏎️', desc:'1287hp, Chinese EV hypercar, dance mode', price:140000000 },
+  { id:'car94', cat:'Cars', name:'Lamborghini Asterion Concept', emoji:'🏎️', desc:'Plug-in hybrid concept, 910hp total', price:350000000 },
+  { id:'car95', cat:'Cars', name:'Pontiac Firebird Trans Am Bandit Edition', emoji:'🚗', desc:'Smokey & Bandit tribute, supercharged', price:18000000 },
+  { id:'car96', cat:'Cars', name:'Rolls-Royce Spectre EV', emoji:'🚗', desc:'First fully electric Rolls, 577hp, silent luxury', price:420000000 },
+  { id:'car97', cat:'Cars', name:'Bentley EXP 100 GT Electric Concept', emoji:'🏎️', desc:'100-year anniversary concept, EV GT', price:550000000 },
+  { id:'car98', cat:'Cars', name:'Lamborghini Lanzador Electric SUV', emoji:'🚙', desc:'2+2 EV super-SUV, ultra-performance', price:300000000 },
+  { id:'car99', cat:'Cars', name:'Bugatti Tourbillon 2026', emoji:'🏎️', desc:'1800hp hybrid V16, successor to Chiron', price:1800000000 },
+  { id:'car100', cat:'Cars', name:'Aston Martin Valhalla', emoji:'🏎️', desc:'937hp hybrid mid-engine, F1 tech', price:380000000 },
+  { id:'car101', cat:'Cars', name:'McLaren W1', emoji:'🏎️', desc:'1275hp hybrid successor to P1, ultimate Mac', price:950000000 },
+  { id:'car102', cat:'Cars', name:'Ferrari 296 GTB Assetto Fiorano', emoji:'🏎️', desc:'830hp hybrid V6, track pack', price:170000000 },
+  { id:'car103', cat:'Cars', name:'GMA T.50 Gordon Murray', emoji:'🏎️', desc:'654hp NA V12, F1 fan, 100 units', price:750000000 },
+  { id:'car104', cat:'Cars', name:'Hispano Suiza Carmen Boulogne', emoji:'🏎️', desc:'1114hp EV, Spanish hypercar revival', price:650000000 },
+  { id:'car105', cat:'Cars', name:'De Tomaso P72', emoji:'🏎️', desc:'700hp mid-engine, 72 units, Italian icon revival', price:480000000 },
+
+  { id:'shoe1', cat:'Shoes', name:'Nike Air Jordan 1 Retro High OG Chicago', emoji:'👟', desc:'2023 original colorway, DS, size 10', price:1200000 },
+  { id:'shoe2', cat:'Shoes', name:'Adidas Yeezy Boost 350 V2 Zebra', emoji:'👟', desc:'Kanye era, DS, primeknit upper', price:850000 },
+  { id:'shoe3', cat:'Shoes', name:'Christian Louboutin Red Sole Oxford', emoji:'👞', desc:'Black patent, iconic red sole, men\'s', price:900000 },
+  { id:'shoe4', cat:'Shoes', name:'Gucci Horsebit Loafer', emoji:'👞', desc:'Black leather, GG logo, handcrafted Italy', price:750000 },
+  { id:'shoe5', cat:'Shoes', name:'Balenciaga Speed Trainer', emoji:'👟', desc:'Sock sneaker, triple black', price:550000 },
+  { id:'shoe6', cat:'Shoes', name:'Louis Vuitton Archlight Sneaker', emoji:'👟', desc:'LV monogram sole, futuristic design', price:980000 },
+  { id:'shoe7', cat:'Shoes', name:'Bottega Veneta Puddle Boot', emoji:'👢', desc:'Signature intrecciato weave, rubber', price:1100000 },
+  { id:'shoe8', cat:'Shoes', name:'Prada Brushed Leather Derby', emoji:'👞', desc:'Saffiano lug sole, minimalist', price:850000 },
+  { id:'shoe9', cat:'Shoes', name:'Nike Air Force 1 x Tiffany & Co', emoji:'👟', desc:'Collaboration, 1837 engraved, limited', price:1500000 },
+  { id:'shoe10', cat:'Shoes', name:'Berluti Alessandro Perforated Oxford', emoji:'👞', desc:'Venezia leather, hand-patina finish', price:1800000 },
+
+  // JEWELLERY
+  { id:'jwl1', cat:'Jewellery', name:'Rolex Daytona Platinum Ice Blue', emoji:'⌚', desc:'116506, meteorite dial, diamonds, 2024', price:180000000 },
+  { id:'jwl2', cat:'Jewellery', name:'Patek Philippe Nautilus 5711', emoji:'⌚', desc:'Blue dial, stainless steel, grail watch', price:250000000 },
+  { id:'jwl3', cat:'Jewellery', name:'Audemars Piguet Royal Oak Offshore', emoji:'⌚', desc:'Chronograph, ceramic, orange details', price:120000000 },
+  { id:'jwl4', cat:'Jewellery', name:'Richard Mille RM 11-03', emoji:'⌚', desc:'Flyback chronograph, carbon TPT', price:350000000 },
+  { id:'jwl5', cat:'Jewellery', name:'Diamond Tennis Necklace 10ct', emoji:'💎', desc:'VS1 clarity, DEF color, 18k white gold', price:45000000 },
+  { id:'jwl6', cat:'Jewellery', name:'VVS Diamond Stud Earrings 5ct', emoji:'💎', desc:'Round brilliant, 18k gold settings', price:25000000 },
+  { id:'jwl7', cat:'Jewellery', name:'Cartier Love Bracelet 18k Gold', emoji:'📿', desc:'Classic yellow gold, screwdriver included', price:6000000 },
+  { id:'jwl8', cat:'Jewellery', name:'Tiffany T1 Wide Ring Platinum', emoji:'💍', desc:'Pavé diamonds, iconic T design', price:4500000 },
+  { id:'jwl9', cat:'Jewellery', name:'Harry Winston Diamond Engagement Ring', emoji:'💍', desc:'3ct round, platinum, HW signature', price:35000000 },
+  { id:'jwl10', cat:'Jewellery', name:'Bvlgari Serpenti Tubogas Bracelet', emoji:'📿', desc:'18k rose gold, double coil', price:8500000 },
+  { id:'jwl11', cat:'Jewellery', name:'Van Cleef Alhambra Necklace', emoji:'📿', desc:'20 motifs, yellow gold, malachite', price:12000000 },
+  { id:'jwl12', cat:'Jewellery', name:'Chopard Happy Sport Diamond Watch', emoji:'⌚', desc:'36mm, 5 dancing diamonds, automatic', price:15000000 },
+  { id:'jwl13', cat:'Jewellery', name:'Gold Grillz VVS Diamonds Set', emoji:'😁', desc:'Top & bottom set, 14k gold, custom fit', price:3500000 },
+  { id:'jwl14', cat:'Jewellery', name:'Iced Out Cuban Link Chain 18k', emoji:'⛓️', desc:'10mm, 24 inch, 18k yellow gold', price:18000000 },
+  { id:'jwl15', cat:'Jewellery', name:'Hublot Big Bang Unico Sapphire', emoji:'⌚', desc:'Transparent case, skeleton dial', price:95000000 },
+
+  // BILLS & SERVICES
+  { id:'bill1', cat:'Bills', name:'EKEDC Electricity Bill', emoji:'⚡', desc:'Monthly prepaid units - 50,000 units', price:25000 },
+  { id:'bill2', cat:'Bills', name:'DSTV Compact Plus Subscription', emoji:'📺', desc:'6 months subscription, premium channels', price:60000 },
+  { id:'bill3', cat:'Bills', name:'MTN Data Bundle 100GB', emoji:'📱', desc:'30-day validity, 4G/5G data', price:30000 },
+  { id:'bill4', cat:'Bills', name:'Airtel Unlimited Call Plan', emoji:'📞', desc:'Monthly unlimited calls & 50GB data', price:20000 },
+  { id:'bill5', cat:'Bills', name:'LAWMA Waste Management Annual', emoji:'🗑️', desc:'Annual residential waste collection', price:48000 },
+  { id:'bill6', cat:'Bills', name:'Lagos State LUC Property Tax', emoji:'🏛️', desc:'Annual land use charge', price:150000 },
+  { id:'bill7', cat:'Bills', name:'Car Insurance Comprehensive', emoji:'🚗', desc:'Full coverage, 1 year, up to ₦50M vehicle', price:450000 },
+  { id:'bill8', cat:'Bills', name:'NHIS Health Insurance Premium', emoji:'🏥', desc:'Annual family health coverage', price:120000 },
+  { id:'bill9', cat:'Bills', name:'Water Bill Annual LSWC', emoji:'💧', desc:'Annual Lagos water corporation bill', price:36000 },
+  { id:'bill10', cat:'Bills', name:'Starlink Internet Subscription', emoji:'🛰️', desc:'12 months premium high-speed satellite', price:960000 },
+
+  // SCHOOL FEES
+  { id:'school1', cat:'School Fees', name:'University of Lagos Tuition', emoji:'🎓', desc:'Full year tuition, engineering faculty', price:180000 },
+  { id:'school2', cat:'School Fees', name:'Covenant University Annual Fees', emoji:'🏫', desc:'All inclusive, private university', price:1200000 },
+  { id:'school3', cat:'School Fees', name:'American University of Nigeria', emoji:'🎓', desc:'One semester, full tuition', price:2500000 },
+  { id:'school4', cat:'School Fees', name:'Harvard University Tuition', emoji:'🏛️', desc:'One semester, undergraduate', price:30000000 },
+  { id:'school5', cat:'School Fees', name:'Oxford University Tuition', emoji:'🏛️', desc:'One year, postgraduate program', price:25000000 },
+  { id:'school6', cat:'School Fees', name:'British International School Lagos', emoji:'🏫', desc:'Annual fees, secondary section', price:3500000 },
+  { id:'school7', cat:'School Fees', name:'Avi-Cenna International School', emoji:'🏫', desc:'Annual nursery/primary fees', price:1800000 },
+  { id:'school8', cat:'School Fees', name:'WAEC Registration Fees', emoji:'📝', desc:'9 subjects, full registration', price:22000 },
+  { id:'school9', cat:'School Fees', name:'JAMB UTME Registration', emoji:'📝', desc:'Full UTME registration + textbook', price:5000 },
+  { id:'school10', cat:'School Fees', name:'MBA Program - Lagos Business School', emoji:'🎓', desc:'Full MBA program tuition', price:6500000 },
+
+  // WEDDINGS
+  { id:'wed1', cat:'Weddings', name:'Traditional Wedding Package', emoji:'💒', desc:'Full trad ceremony, catering 500 guests', price:5000000 },
+  { id:'wed2', cat:'Weddings', name:'White Wedding Premium Package', emoji:'👰', desc:'Church/registry, decoration, cake, photos', price:8000000 },
+  { id:'wed3', cat:'Weddings', name:'Wedding Venue - Eko Hotel', emoji:'🏨', desc:'Grand ballroom, 1000 guests capacity', price:4500000 },
+  { id:'wed4', cat:'Weddings', name:'Celebrity Wedding Photographer', emoji:'📸', desc:'2 days coverage, 1000+ edited photos', price:2000000 },
+  { id:'wed5', cat:'Weddings', name:'Wedding Catering 500 Guests', emoji:'🍽️', desc:'Full buffet, cocktails, dessert station', price:3000000 },
+  { id:'wed6', cat:'Weddings', name:'Bridal Designer Gown Custom', emoji:'👗', desc:'Bespoke bridal gown, 3 fittings', price:1500000 },
+  { id:'wed7', cat:'Weddings', name:'Wedding Band & DJ Package', emoji:'🎵', desc:'Live band 6hrs + DJ till midnight', price:800000 },
+  { id:'wed8', cat:'Weddings', name:'Honeymoon Package Maldives', emoji:'🌴', desc:'7 nights overwater villa, all inclusive', price:12000000 },
+  { id:'wed9', cat:'Weddings', name:'Wedding Cake 5-Tier Custom', emoji:'🎂', desc:'Fondant covered, gold accents, custom design', price:350000 },
+  { id:'wed10', cat:'Weddings', name:'Engagement Ring Custom Design', emoji:'💍', desc:'2ct lab diamond, platinum setting', price:4000000 },
+
+  // PARTIES
+  { id:'party1', cat:'Parties', name:'Club Takeover Lagos Island', emoji:'🥳', desc:'VIP section, 50 bottles, DJ for night', price:2500000 },
+  { id:'party2', cat:'Parties', name:'Birthday Bash Package 200 Guests', emoji:'🎉', desc:'Full event, catering, DJ, decorations', price:3000000 },
+  { id:'party3', cat:'Parties', name:'Private Yacht Party', emoji:'🛥️', desc:'6-hour yacht cruise, Lagos waters, 30 guests', price:4000000 },
+  { id:'party4', cat:'Parties', name:'Rooftop Pool Party Package', emoji:'🏊', desc:'Venue hire, DJ, catering, 100 guests', price:1500000 },
+  { id:'party5', cat:'Parties', name:'Celebrity Performer Booking', emoji:'🎤', desc:'A-list Nigerian artist, 1hr performance', price:15000000 },
+  { id:'party6', cat:'Parties', name:'Owambe Owambe Party', emoji:'🪘', desc:'Fuji live band, DJ, asoebi coordination', price:800000 },
+  { id:'party7', cat:'Parties', name:'Kids Birthday Party Premium', emoji:'🎈', desc:'Bouncy castle, entertainer, catering 50 kids', price:350000 },
+  { id:'party8', cat:'Parties', name:'House Warming Party Full Package', emoji:'🏠', desc:'Decoration, catering, drinks, DJ', price:1200000 },
+  { id:'party9', cat:'Parties', name:'New Year\'s Eve Countdown Party', emoji:'🎆', desc:'Fireworks, DJ, midnight champagne, 300 guests', price:5000000 },
+  { id:'party10', cat:'Parties', name:'Surprise Party Planning Service', emoji:'🎊', desc:'Full planning, coordination, decorations', price:600000 },
+
+  // TAXES
+  { id:'tax1', cat:'Taxes', name:'Personal Income Tax Annual (PAYE)', emoji:'📊', desc:'Annual PAYE tax filing and payment', price:500000 },
+  { id:'tax2', cat:'Taxes', name:'Company Income Tax Filing', emoji:'🏢', desc:'CIT computation and payment to FIRS', price:1500000 },
+  { id:'tax3', cat:'Taxes', name:'VAT Returns Quarterly', emoji:'📋', desc:'Quarterly VAT computation and filing', price:200000 },
+  { id:'tax4', cat:'Taxes', name:'Capital Gains Tax', emoji:'📈', desc:'CGT on property/asset sale', price:750000 },
+  { id:'tax5', cat:'Taxes', name:'Withholding Tax Remittance', emoji:'💰', desc:'Monthly WHT remittance to FIRS', price:300000 },
+  { id:'tax6', cat:'Taxes', name:'Lagos State Development Levy', emoji:'🏛️', desc:'Annual development levy', price:20000 },
+  { id:'tax7', cat:'Taxes', name:'Tax Clearance Certificate', emoji:'📜', desc:'3-year TCC from FIRS', price:50000 },
+  { id:'tax8', cat:'Taxes', name:'Business Premises Levy', emoji:'🏪', desc:'Annual business premises registration', price:75000 },
+
+  // MORE BILLS
+  { id:'bill11', cat:'Bills', name:'Glo 5G Unlimited Plan', emoji:'📡', desc:'Monthly 5G unlimited data + calls', price:15000 },
+  { id:'bill12', cat:'Bills', name:'Netflix Premium Annual Subscription', emoji:'🎬', desc:'12 months premium, 4K, 4 screens', price:56000 },
+  { id:'bill13', cat:'Bills', name:'Spotify Premium Annual', emoji:'🎵', desc:'12 months premium music streaming', price:24000 },
+  { id:'bill14', cat:'Bills', name:'Generator Diesel Monthly', emoji:'⛽', desc:'Monthly fuel for 10KVA generator', price:180000 },
+  { id:'bill15', cat:'Bills', name:'Building Estate Service Charge', emoji:'🏘️', desc:'Annual estate maintenance levy', price:480000 },
+  { id:'bill16', cat:'Bills', name:'Spectranet 100Mbps Fibre Annual', emoji:'🌐', desc:'12 months fibre broadband', price:240000 },
+  { id:'bill17', cat:'Bills', name:'Emirates Lagos-Dubai Business Return', emoji:'✈️', desc:'Return business class ticket', price:1500000 },
+  { id:'bill18', cat:'Bills', name:'British Airways Lagos-London First Class', emoji:'✈️', desc:'Return first class ticket', price:3200000 },
+
+  // MORE TAXES
+  { id:'tax9', cat:'Taxes', name:'Digital Services Tax Filing', emoji:'💻', desc:'DST compliance for tech companies', price:400000 },
+  { id:'tax10', cat:'Taxes', name:'Import Duty Payment', emoji:'🚢', desc:'Customs duty for imported goods', price:650000 },
+  { id:'tax11', cat:'Taxes', name:'Excise Duty on Luxury Goods', emoji:'👜', desc:'Government excise on luxury purchases', price:200000 },
+  { id:'tax12', cat:'Taxes', name:'Transfer Pricing Compliance', emoji:'📊', desc:'Annual TP documentation & filing', price:1000000 },
+
+  // FOOD & DINING
+  { id:'food1', cat:'Food & Dining', name:'Nobu Lagos Private Dinner', emoji:'🍱', desc:'10-course omakase for 4, chef\'s table', price:800000 },
+  { id:'food2', cat:'Food & Dining', name:'Jikoni Restaurant Private Reservation', emoji:'🍽️', desc:'Luxury Lagos fine dining, 6 guests', price:350000 },
+  { id:'food3', cat:'Food & Dining', name:'Dubai Burj Al Arab Sunday Brunch', emoji:'🏨', desc:'Gold plated dining experience', price:500000 },
+  { id:'food4', cat:'Food & Dining', name:'Weekly Luxury Grocery Delivery', emoji:'🛒', desc:'Premium organic groceries for household', price:120000 },
+  { id:'food5', cat:'Food & Dining', name:'Private Chef Monthly Service', emoji:'👨‍🍳', desc:'Full-time private chef, 30 days', price:600000 },
+  { id:'food6', cat:'Food & Dining', name:'Petite Cuisine Catering Monthly', emoji:'🍴', desc:'Meal prep & delivery, family of 5', price:180000 },
+  { id:'food7', cat:'Food & Dining', name:'Michelin Star Pop-Up Dinner', emoji:'⭐', desc:'3 Michelin star chef, 20 guests', price:2000000 },
+  { id:'food8', cat:'Food & Dining', name:'VIP Lagos Restaurant Week Pass', emoji:'🎟️', desc:'All restaurants, VIP treatment', price:75000 },
+
+  // TRAVEL
+  { id:'travel1', cat:'Travel', name:'Maldives 7-Night Overwater Villa', emoji:'🌴', desc:'Soneva Fushi, all-inclusive, butler service', price:8000000 },
+  { id:'travel2', cat:'Travel', name:'Paris 5-Star Hotel 7 Nights', emoji:'🗼', desc:'Le Bristol Paris, suite, 7 nights', price:5500000 },
+  { id:'travel3', cat:'Travel', name:'Santorini Greece Island Retreat', emoji:'🏛️', desc:'Canaves Oia Epitome, 5 nights', price:4000000 },
+  { id:'travel4', cat:'Travel', name:'Tokyo Luxury Tour 10 Days', emoji:'🗾', desc:'Four Seasons Tokyo, private guide', price:6000000 },
+  { id:'travel5', cat:'Travel', name:'Kenya Maasai Mara Safari 5 Days', emoji:'🦁', desc:'Private luxury camp, game drives', price:3500000 },
+  { id:'travel6', cat:'Travel', name:'New York City Plaza Hotel Week', emoji:'🗽', desc:'The Plaza Hotel, Central Park view', price:4500000 },
+  { id:'travel7', cat:'Travel', name:'Bali Private Villa 2 Weeks', emoji:'🌺', desc:'6-bed villa, private pool, butler', price:2500000 },
+  { id:'travel8', cat:'Travel', name:'Private Jet Charter Lagos-Dubai', emoji:'✈️', desc:'Gulfstream G650, 8 passengers', price:25000000 },
+
+];
+
+const CATEGORIES = ['All', 'Cars', 'Houses', 'Clothes', 'Shoes', 'Jewellery', 'Bills', 'School Fees', 'Weddings', 'Parties', 'Taxes', 'Food & Dining', 'Travel'];
+
+let currentCat = 'All';
+let searchQuery = '';
+let myBalance = 0;
+let ownedItems = JSON.parse(localStorage.getItem('neo_owned_' + (auth.user()?.accountNumber || 'x')) || '[]');
+let purchasingItem = null;
+
+function saveOwned() {
+  localStorage.setItem('neo_owned_' + (auth.user()?.accountNumber || 'x'), JSON.stringify(ownedItems));
+}
+
+function isOwned(id) {
+  return ownedItems.some(o => o.id === id);
+}
+
+function renderCategories() {
+  const el = document.getElementById('shop-cats');
+  el.innerHTML = CATEGORIES.map(c => `
+    <button class="cat-btn ${c === currentCat ? 'active' : ''}" onclick="setCategory('${c}')">${getCatEmoji(c)} ${c}</button>
+  `).join('');
+}
+
+function getCatEmoji(c) {
+  const map = { All:'🛍️', Cars:'🚗', Houses:'🏠', Clothes:'👔', Shoes:'👟', Jewellery:'💎', Bills:'⚡', 'School Fees':'🎓', Weddings:'💒', Parties:'🎉', Taxes:'📊', 'Food & Dining':'🍽️', Travel:'✈️' };
+  return map[c] || '';
+}
+
+function setCategory(c) {
+  currentCat = c;
+  renderCategories();
+  renderShopGrid();
+}
+
+function filterItems() {
+  searchQuery = document.getElementById('shop-search').value.toLowerCase();
+  renderShopGrid();
+}
+
+function getFilteredItems() {
+  return SHOP_ITEMS.filter(item => {
+    const matchCat = currentCat === 'All' || item.cat === currentCat;
+    const matchSearch = !searchQuery || item.name.toLowerCase().includes(searchQuery) || item.desc.toLowerCase().includes(searchQuery);
+    return matchCat && matchSearch;
+  });
+}
+
+function renderShopGrid() {
+  const items = getFilteredItems();
+  document.getElementById('items-count').textContent = `${items.length} item${items.length !== 1 ? 's' : ''} found`;
+  const grid = document.getElementById('shop-grid');
+  if (!items.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">No items found</div></div>`;
+    return;
+  }
+  grid.innerHTML = items.map(item => {
+    const owned = isOwned(item.id);
+    const canAfford = myBalance >= item.price;
+    return `
+      <div class="shop-item">
+        ${owned ? '<div class="owned-badge">✓ Owned</div>' : ''}
+        <span class="item-emoji">${item.emoji}</span>
+        <div class="item-category">${item.cat}</div>
+        <div class="item-name">${item.name}</div>
+        <div class="item-desc">${item.desc}</div>
+        <div class="item-price">${formatMoney(item.price)}</div>
+        <button class="buy-btn" onclick="openBuyModal('${item.id}')" ${owned ? 'disabled' : ''}>
+          ${owned ? '✓ Purchased' : canAfford ? '🛒 Buy Now' : '💸 Insufficient Balance'}
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderOwnedItems() {
+  const el = document.getElementById('owned-grid');
+  document.getElementById('owned-count').textContent = `${ownedItems.length} items owned`;
+  if (!ownedItems.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🛍️</div><div class="empty-title">No purchases yet</div><p style="color:var(--text2);font-size:14px">Go to the shop and buy something!</p></div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;margin-bottom:16px">🏆 My Purchases (${ownedItems.length})</div>
+    <div class="my-items-grid">
+      ${ownedItems.map(o => {
+        const item = SHOP_ITEMS.find(i => i.id === o.id);
+        if (!item) return '';
+        return `
+          <div class="my-item">
+            <div class="my-item-emoji">${item.emoji}</div>
+            <div class="my-item-name">${item.name}</div>
+            <div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:4px">${formatMoney(item.price)}</div>
+            <div class="my-item-date">${new Date(o.date).toLocaleDateString()}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function showTab(tab) {
+  document.getElementById('tab-shop').style.display = tab === 'shop' ? '' : 'none';
+  document.getElementById('tab-owned').style.display = tab === 'owned' ? '' : 'none';
+  document.getElementById('tab-shop-btn').classList.toggle('active', tab === 'shop');
+  document.getElementById('tab-owned-btn').classList.toggle('active', tab === 'owned');
+  if (tab === 'owned') renderOwnedItems();
+}
+
+function openBuyModal(itemId) {
+  const item = SHOP_ITEMS.find(i => i.id === itemId);
+  if (!item) return;
+  purchasingItem = item;
+
+  document.getElementById('modal-emoji').textContent = item.emoji;
+  document.getElementById('modal-name').textContent = item.name;
+  document.getElementById('modal-price').textContent = formatMoney(item.price);
+  document.getElementById('confirm-price').textContent = formatMoney(item.price);
+  document.getElementById('confirm-balance').textContent = formatMoney(myBalance);
+  document.getElementById('confirm-after').textContent = formatMoney(myBalance - item.price);
+
+  if (myBalance < item.price) {
+    document.getElementById('confirm-after').style.color = 'var(--red)';
+  } else {
+    document.getElementById('confirm-after').style.color = 'var(--accent)';
+  }
+
+  document.querySelectorAll('.pin-digit').forEach(d => d.value = '');
+  document.getElementById('confirm-buy-btn').disabled = true;
+  document.getElementById('buy-alert').className = 'alert';
+  document.getElementById('buy-modal').classList.add('open');
+}
+
+function closeBuyModal() {
+  document.getElementById('buy-modal').classList.remove('open');
+  purchasingItem = null;
+}
+
+// PIN input auto-advance
+document.querySelectorAll('.pin-digit').forEach((el, i, arr) => {
+  el.addEventListener('input', () => {
+    if (el.value && i < arr.length - 1) arr[i + 1].focus();
+    const pin = [...arr].map(d => d.value).join('');
+    document.getElementById('confirm-buy-btn').disabled = pin.length !== 4;
+  });
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !el.value && i > 0) arr[i - 1].focus();
+  });
+});
+
+async function confirmPurchase() {
+  if (!purchasingItem) return;
+  const pin = [...document.querySelectorAll('.pin-digit')].map(d => d.value).join('');
+  const btn = document.getElementById('confirm-buy-btn');
+  const alertEl = document.getElementById('buy-alert');
+
+  if (myBalance < purchasingItem.price) {
+    showAlert(alertEl, 'Insufficient balance!');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Processing...';
+
+  try {
+    // Verify PIN and deduct balance via transfer to self with description
+    const result = await api('POST', '/api/transfer/purchase', {
+      amount: purchasingItem.price,
+      pin,
+      description: `Purchased: ${purchasingItem.name}`,
+      itemId: purchasingItem.id
+    });
+
+    // Save to owned
+    ownedItems.unshift({ id: purchasingItem.id, date: new Date().toISOString() });
+    saveOwned();
+    myBalance = result.newBalance;
+    document.getElementById('shop-balance').textContent = formatMoney(myBalance);
+
+    closeBuyModal();
+    renderShopGrid();
+    renderOwnedItems();
+
+    // Show success toast
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--accent);color:var(--bg);padding:14px 20px;border-radius:12px;font-weight:600;font-size:14px;z-index:9999;animation:fadeIn 0.3s ease';
+    toast.textContent = `✅ ${purchasingItem.emoji} ${purchasingItem.name} purchased!`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+
+  } catch(e) {
+    showAlert(alertEl, e.message);
+    btn.disabled = false;
+    btn.textContent = 'Buy Now 🛒';
+  }
+}
+
+async function init() {
+  try {
+    const data = await api('GET', '/api/user/me');
+    myBalance = data.balance;
+    document.getElementById('shop-balance').textContent = formatMoney(myBalance);
+    document.getElementById('owned-count').textContent = `${ownedItems.length} items owned`;
+  } catch(e) { console.error(e); }
+
+  renderCategories();
+  renderShopGrid();
+}
+
+init();
+</script>
+</body>
+</html>

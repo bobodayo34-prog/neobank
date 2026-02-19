@@ -30,6 +30,7 @@ app.get('/transfer', (req, res) => res.sendFile(path.join(__dirname, 'public', '
 app.get('/history', (req, res) => res.sendFile(path.join(__dirname, 'public', 'history.html')));
 app.get('/business', (req, res) => res.sendFile(path.join(__dirname, 'public', 'business.html')));
 app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'public', 'profile.html')));
+app.get('/shop', (req, res) => res.sendFile(path.join(__dirname, 'public', 'shop.html')));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
